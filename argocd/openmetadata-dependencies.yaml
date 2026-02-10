@@ -34,7 +34,10 @@ spec:
           primary:
             persistence:
               enabled: true
-              size: 20Gi
+              # storageClass: ""
+              size: 5Gi
+              accessModes:
+                - ReadWriteOnce
             resources:
               requests:
                 cpu: 250m
@@ -65,7 +68,10 @@ spec:
               memory: 2Gi
           persistence:
             enabled: true
-            size: 20Gi
+            # storageClass: ""
+            size: 5Gi
+            accessModes:
+              - ReadWriteOnce
           config:
             opensearch.yml: |
               plugins.security.disabled: true
@@ -96,7 +102,24 @@ spec:
             enabled: true
             persistence:
               enabled: true
-              size: 10Gi
+              # storageClass: ""
+              size: 5Gi
+              accessModes:
+                - ReadWriteOnce
+          dags:
+            persistence:
+              enabled: true
+              # storageClass: ""
+              size: 1Gi
+              accessModes:
+                - ReadWriteOnce
+          logs:
+            persistence:
+              enabled: true
+              # storageClass: ""
+              size: 1Gi
+              accessModes:
+                - ReadWriteOnce
 
   destination:
     server: https://kubernetes.default.svc

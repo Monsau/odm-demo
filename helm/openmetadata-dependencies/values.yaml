@@ -4,6 +4,12 @@
 # Inclut: MySQL, OpenSearch, Airflow
 # =============================================================================
 
+# -- StorageClass à utiliser pour tous les PVC
+# Décommenter et renseigner si pas de StorageClass par défaut sur le cluster.
+# Exemples: "standard", "gp2", "managed-premium", "local-path"
+# global:
+#   storageClass: ""
+
 # =============================================================================
 # MySQL
 # =============================================================================
@@ -20,7 +26,10 @@ mysql:
   primary:
     persistence:
       enabled: true
-      size: 20Gi
+      # storageClass: ""
+      size: 5Gi
+      accessModes:
+        - ReadWriteOnce
     resources:
       requests:
         cpu: 250m
@@ -54,7 +63,10 @@ opensearch:
       memory: 2Gi
   persistence:
     enabled: true
-    size: 20Gi
+    # storageClass: ""
+    size: 5Gi
+    accessModes:
+      - ReadWriteOnce
   config:
     opensearch.yml: |
       plugins.security.disabled: true
@@ -104,12 +116,21 @@ airflow:
     enabled: true
     persistence:
       enabled: true
-      size: 10Gi
+      # storageClass: ""
+      size: 5Gi
+      accessModes:
+        - ReadWriteOnce
   dags:
     persistence:
       enabled: true
-      size: 5Gi
+      # storageClass: ""
+      size: 1Gi
+      accessModes:
+        - ReadWriteOnce
   logs:
     persistence:
       enabled: true
-      size: 5Gi
+      # storageClass: ""
+      size: 1Gi
+      accessModes:
+        - ReadWriteOnce
