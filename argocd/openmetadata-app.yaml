@@ -1,0 +1,53 @@
+# =============================================================================
+# ArgoCD Application - OpenMetadata Server
+# Déploie le serveur OpenMetadata via le chart Helm officiel
+# Les values sont stockées dans le repo Git pour un vrai GitOps
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openmetadata
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: openmetadata
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  # ---------------------------------------------------------------------------
+  # Sources multiples : chart Helm + values depuis le repo Git
+  # ---------------------------------------------------------------------------
+  sources:
+    # Source 1 : Le chart Helm officiel OpenMetadata
+    - repoURL: https://helm.open-metadata.org
+      chart: openmetadata
+      targetRevision: 1.11.8
+      helm:
+        valueFiles:
+          - $values/helm/openmetadata/values.yaml
+
+    # Source 2 : Le repo Git contenant les values
+    - repoURL: git@github.com:Monsau/odm-demo.git
+      targetRevision: main
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openmetadata
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

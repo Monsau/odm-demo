@@ -1,0 +1,40 @@
+# =============================================================================
+# ArgoCD AppProject - OpenMetadata
+# Projet ArgoCD dédié pour isoler les ressources OpenMetadata
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: openmetadata
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: "Projet OpenMetadata - Data Catalog & Governance"
+
+  # Repos autorisés
+  sourceRepos:
+    - "git@github.com:Monsau/odm-demo.git"
+    - "https://helm.open-metadata.org"
+
+  # Destinations autorisées
+  destinations:
+    - namespace: openmetadata
+      server: https://kubernetes.default.svc
+
+  # Types de ressources autorisés
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: "*"
+    - group: apps
+      kind: "*"
+    - group: batch
+      kind: "*"
+    - group: networking.k8s.io
+      kind: "*"
+    - group: rbac.authorization.k8s.io
+      kind: "*"

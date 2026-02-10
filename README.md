@@ -32,6 +32,11 @@ Déploiement d'[OpenMetadata](https://open-metadata.org/) sur Kubernetes en util
 
 ```
 .
+├── argocd/
+│   ├── project.yaml                  # AppProject ArgoCD
+│   ├── openmetadata-infra.yaml       # App ArgoCD - namespace
+│   ├── openmetadata-dependencies.yaml# App ArgoCD - dépendances (MySQL, OpenSearch, Airflow)
+│   └── openmetadata-app.yaml         # App ArgoCD - serveur OpenMetadata (multi-sources)
 ├── helm/
 │   ├── openmetadata/
 │   │   └── values.yaml              # Valeurs pour le chart OpenMetadata
@@ -190,3 +195,66 @@ kubectl describe pod <pod-name> -n openmetadata
 - [Chart Helm sur Artifact Hub](https://artifacthub.io/packages/helm/open-metadata/openmetadata)
 - [GitHub OpenMetadata](https://github.com/open-metadata/OpenMetadata)
 - [Helm Values Reference](https://docs.open-metadata.org/latest/deployment/kubernetes/helm-values)
+
+---
+
+## Déploiement avec ArgoCD (GitOps)
+
+### Prérequis
+
+- ArgoCD installé sur le cluster
+- Le repo Git accessible par ArgoCD (ajouter la clé SSH dans ArgoCD Settings > Repositories)
+
+### 1. Enregistrer le repo dans ArgoCD
+
+```bash
+argocd repo add git@github.com:Monsau/odm-demo.git --ssh-private-key-path ~/.ssh/id_rsa
+```
+
+### 2. Créer les secrets manuellement (non gérés par ArgoCD)
+
+```bash
+kubectl create namespace openmetadata
+kubectl create secret generic mysql-secrets \
+  --from-literal=openmetadata-mysql-password=openmetadata_password \
+  -n openmetadata
+kubectl create secret generic airflow-secrets \
+  --from-literal=openmetadata-airflow-password=admin \
+  -n openmetadata
+```
+
+### 3. Appliquer les manifestes ArgoCD
+
+```bash
+# Créer le projet ArgoCD
+kubectl apply -f argocd/project.yaml
+
+# Déployer l'infra (namespace)
+kubectl apply -f argocd/openmetadata-infra.yaml
+
+# Déployer les dépendances (MySQL, OpenSearch, Airflow)
+kubectl apply -f argocd/openmetadata-dependencies.yaml
+
+# Déployer OpenMetadata (utilise les values du repo Git)
+kubectl apply -f argocd/openmetadata-app.yaml
+```
+
+### 4. Suivre le déploiement
+
+```bash
+argocd app list
+argocd app get openmetadata-dependencies
+argocd app get openmetadata
+```
+
+### Architecture ArgoCD
+
+```
+ArgoCD
+├── openmetadata-infra          → k8s/namespace.yaml (repo Git)
+├── openmetadata-dependencies   → chart helm open-metadata/openmetadata-dependencies
+└── openmetadata                → chart helm open-metadata/openmetadata
+                                  + values depuis git@github.com:Monsau/odm-demo.git
+```
+
+L'application `openmetadata-app.yaml` utilise la fonctionnalité **multi-sources** d'ArgoCD : le chart Helm est récupéré depuis le repo Helm officiel, et les `values.yaml` sont lus depuis le repo Git. Toute modification des values dans Git déclenche automatiquement un sync.

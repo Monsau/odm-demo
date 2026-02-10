@@ -1,0 +1,117 @@
+# =============================================================================
+# ArgoCD Application - OpenMetadata Dependencies
+# Déploie MySQL, OpenSearch et Airflow via le chart Helm officiel
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: openmetadata-dependencies
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: openmetadata
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://helm.open-metadata.org
+    chart: openmetadata-dependencies
+    targetRevision: 1.11.8
+    helm:
+      valueFiles: []
+      values: |
+        mysql:
+          enabled: true
+          fullnameOverride: "mysql"
+          image:
+            tag: "8.0"
+          auth:
+            rootPassword: ""
+            database: openmetadata_db
+            username: openmetadata_user
+            existingSecret: mysql-secrets
+          primary:
+            persistence:
+              enabled: true
+              size: 20Gi
+            resources:
+              requests:
+                cpu: 250m
+                memory: 512Mi
+              limits:
+                cpu: 1
+                memory: 2Gi
+          initdbScripts:
+            init_openmetadata_db_scripts.sql: |
+              CREATE DATABASE IF NOT EXISTS openmetadata_db;
+              CREATE USER IF NOT EXISTS 'openmetadata_user'@'%' IDENTIFIED BY 'openmetadata_password';
+              GRANT ALL PRIVILEGES ON openmetadata_db.* TO 'openmetadata_user'@'%';
+              FLUSH PRIVILEGES;
+
+        opensearch:
+          enabled: true
+          fullnameOverride: "opensearch"
+          clusterName: "opensearch"
+          replicas: 1
+          minimumMasterNodes: 1
+          singleNode: true
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              cpu: 1
+              memory: 2Gi
+          persistence:
+            enabled: true
+            size: 20Gi
+          config:
+            opensearch.yml: |
+              plugins.security.disabled: true
+          extraEnvs:
+            - name: DISABLE_SECURITY_PLUGIN
+              value: "true"
+            - name: discovery.type
+              value: single-node
+
+        airflow:
+          enabled: true
+          airflow:
+            image:
+              repository: docker.getcollate.io/openmetadata/ingestion
+              tag: "1.11.8"
+              pullPolicy: Always
+            executor: LocalExecutor
+            config:
+              AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
+            users:
+              - username: admin
+                password: admin
+                role: Admin
+                email: admin@openmetadata.org
+                firstName: Admin
+                lastName: User
+          postgresql:
+            enabled: true
+            persistence:
+              enabled: true
+              size: 10Gi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: openmetadata
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
