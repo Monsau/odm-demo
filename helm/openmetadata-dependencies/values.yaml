@@ -1,0 +1,115 @@
+# =============================================================================
+# OpenMetadata Dependencies Helm Values
+# Chart: open-metadata/openmetadata-dependencies
+# Inclut: MySQL, OpenSearch, Airflow
+# =============================================================================
+
+# =============================================================================
+# MySQL
+# =============================================================================
+mysql:
+  enabled: true
+  fullnameOverride: "mysql"
+  image:
+    tag: "8.0"
+  auth:
+    rootPassword: ""  # Défini via secret
+    database: openmetadata_db
+    username: openmetadata_user
+    existingSecret: mysql-secrets
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 2Gi
+  initdbScripts:
+    init_openmetadata_db_scripts.sql: |
+      CREATE DATABASE IF NOT EXISTS openmetadata_db;
+      CREATE USER IF NOT EXISTS 'openmetadata_user'@'%' IDENTIFIED BY 'openmetadata_password';
+      GRANT ALL PRIVILEGES ON openmetadata_db.* TO 'openmetadata_user'@'%';
+      FLUSH PRIVILEGES;
+
+# =============================================================================
+# OpenSearch
+# =============================================================================
+opensearch:
+  enabled: true
+  fullnameOverride: "opensearch"
+  clusterName: "opensearch"
+  replicas: 1
+  minimumMasterNodes: 1
+  singleNode: true
+  resources:
+    requests:
+      cpu: 250m
+      memory: 1Gi
+    limits:
+      cpu: 1
+      memory: 2Gi
+  persistence:
+    enabled: true
+    size: 20Gi
+  config:
+    opensearch.yml: |
+      plugins.security.disabled: true
+  extraEnvs:
+    - name: DISABLE_SECURITY_PLUGIN
+      value: "true"
+    - name: discovery.type
+      value: single-node
+
+# =============================================================================
+# Airflow
+# =============================================================================
+airflow:
+  enabled: true
+  airflow:
+    image:
+      repository: docker.getcollate.io/openmetadata/ingestion
+      tag: "1.11.8"
+      pullPolicy: Always
+    executor: LocalExecutor
+    config:
+      AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
+    users:
+      - username: admin
+        password: admin
+        role: Admin
+        email: admin@openmetadata.org
+        firstName: Admin
+        lastName: User
+  web:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 2Gi
+  scheduler:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 2Gi
+  postgresql:
+    enabled: true
+    persistence:
+      enabled: true
+      size: 10Gi
+  dags:
+    persistence:
+      enabled: true
+      size: 5Gi
+  logs:
+    persistence:
+      enabled: true
+      size: 5Gi

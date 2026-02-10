@@ -1,0 +1,334 @@
+# =============================================================================
+# OpenMetadata Helm Values
+# Chart: open-metadata/openmetadata
+# Version: 1.11.8
+# Repo: https://helm.open-metadata.org
+# =============================================================================
+
+replicaCount: 1
+
+image:
+  repository: docker.getcollate.io/openmetadata/server
+  pullPolicy: Always
+  tag: "1.11.8"
+
+# -- Nom complet du release Helm
+fullnameOverride: "openmetadata"
+
+# =============================================================================
+# Configuration OpenMetadata
+# =============================================================================
+openmetadata:
+  config:
+    # -------------------------------------------------------------------------
+    # Authentification
+    # -------------------------------------------------------------------------
+    authentication:
+      enabled: true
+      provider: basic
+      clientType: public
+      publicKeys:
+        - "http://openmetadata:8585/api/v1/system/config/jwks"
+      authority: "https://accounts.google.com"
+      clientId: ""
+      callbackUrl: ""
+      enableSelfSignup: true
+      jwtPrincipalClaims:
+        - email
+        - preferred_username
+        - sub
+
+    # -------------------------------------------------------------------------
+    # Authorizer
+    # -------------------------------------------------------------------------
+    authorizer:
+      enabled: true
+      className: org.openmetadata.service.security.DefaultAuthorizer
+      containerRequestFilter: org.openmetadata.service.security.JwtFilter
+      initialAdmins:
+        - admin
+      allowedEmailRegistrationDomains:
+        - all
+      principalDomain: open-metadata.org
+      enforcePrincipalDomain: false
+      enableSecureSocketConnection: false
+
+    # -------------------------------------------------------------------------
+    # Base de données (MySQL)
+    # -------------------------------------------------------------------------
+    database:
+      enabled: true
+      host: mysql
+      port: 3306
+      databaseName: openmetadata_db
+      dbScheme: mysql
+      driverClass: com.mysql.cj.jdbc.Driver
+      dbParams: "allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC"
+      auth:
+        username: openmetadata_user
+        password:
+          secretRef: mysql-secrets
+          secretKey: openmetadata-mysql-password
+
+    # -------------------------------------------------------------------------
+    # Elasticsearch / OpenSearch
+    # -------------------------------------------------------------------------
+    elasticsearch:
+      enabled: true
+      host: opensearch
+      port: 9200
+      scheme: http
+      searchType: opensearch
+      clusterAlias: ""
+      searchIndexMappingLanguage: EN
+      keepAliveTimeoutSecs: 600
+      payLoadSize: 10485760
+      auth:
+        enabled: false
+        username: elasticsearch
+        password:
+          secretRef: elasticsearch-secrets
+          secretKey: openmetadata-elasticsearch-password
+      trustStore:
+        enabled: false
+
+    # -------------------------------------------------------------------------
+    # Pipeline Service Client (Airflow)
+    # -------------------------------------------------------------------------
+    pipelineServiceClientConfig:
+      enabled: true
+      className: org.openmetadata.service.clients.pipeline.airflow.AirflowRESTClient
+      apiEndpoint: http://openmetadata-dependencies-web:8080
+      metadataApiEndpoint: http://openmetadata:8585/api
+      verifySsl: "no-ssl"
+      sslCertificatePath: "/no/path"
+      healthCheckInterval: 300
+      ingestionIpInfoEnabled: false
+      auth:
+        username: admin
+        password:
+          secretRef: airflow-secrets
+          secretKey: openmetadata-airflow-password
+
+    # -------------------------------------------------------------------------
+    # JWT Token Configuration
+    # -------------------------------------------------------------------------
+    jwtTokenConfiguration:
+      enabled: true
+      rsapublicKeyFilePath: "./conf/public_key.der"
+      rsaprivateKeyFilePath: "./conf/private_key.der"
+      jwtissuer: "open-metadata.org"
+      keyId: "Gb389a-9f76-gdjs-a92j-0242bk94356"
+
+    # -------------------------------------------------------------------------
+    # Fernet Key (chiffrement)
+    # -------------------------------------------------------------------------
+    fernetkey:
+      value: "jJ/9sz0g0OHxsfxOoSfdFdmk3ysNmPRnH3TUAbz3IHA="
+      secretRef: ""
+      secretKef: ""
+
+    # -------------------------------------------------------------------------
+    # Serveur OpenMetadata
+    # -------------------------------------------------------------------------
+    openmetadata:
+      host: openmetadata
+      port: 8585
+      adminPort: 8586
+
+    # -------------------------------------------------------------------------
+    # Cluster
+    # -------------------------------------------------------------------------
+    clusterName: openmetadata
+
+    # -------------------------------------------------------------------------
+    # Logs
+    # -------------------------------------------------------------------------
+    logLevel: INFO
+
+    # -------------------------------------------------------------------------
+    # Event Monitor
+    # -------------------------------------------------------------------------
+    eventMonitor:
+      enabled: true
+      type: prometheus
+      batchSize: 10
+      pathPattern:
+        - "/api/v1/tables/*"
+        - "/api/v1/health-check"
+      latency: []
+
+    # -------------------------------------------------------------------------
+    # Secrets Manager
+    # -------------------------------------------------------------------------
+    secretsManager:
+      enabled: true
+      provider: ""
+      prefix: ""
+      tags: []
+      additionalParameters:
+        enabled: false
+
+    # -------------------------------------------------------------------------
+    # Web Configuration
+    # -------------------------------------------------------------------------
+    web:
+      enabled: true
+      contentTypeOptions:
+        enabled: false
+      csp:
+        enabled: false
+        policy: "default-src 'self'"
+        reportOnlyPolicy: ""
+      frameOptions:
+        enabled: false
+        option: SAMEORIGIN
+        origin: ""
+      hsts:
+        enabled: false
+        includeSubDomains: true
+        maxAge: "365 days"
+        preload: true
+      uriPath: "/api"
+      xssProtection:
+        block: true
+        enabled: false
+        onXss: true
+      referrer-policy:
+        enabled: false
+        option: "SAME_ORIGIN"
+      permission-policy:
+        enabled: false
+        option: ""
+
+    # -------------------------------------------------------------------------
+    # Upgrade Migration
+    # -------------------------------------------------------------------------
+    upgradeMigrationConfigs:
+      debug: false
+      additionalArgs: ""
+
+    # -------------------------------------------------------------------------
+    # Deploy Pipelines
+    # -------------------------------------------------------------------------
+    deployPipelinesConfig:
+      enabled: true
+      debug: false
+      additionalArgs: ""
+
+    # -------------------------------------------------------------------------
+    # Reindex
+    # -------------------------------------------------------------------------
+    reindexConfig:
+      enabled: true
+      debug: false
+      additionalArgs: ""
+
+# =============================================================================
+# Service Kubernetes
+# =============================================================================
+service:
+  type: ClusterIP
+  port: 8585
+  adminPort: 8586
+  annotations: {}
+
+# =============================================================================
+# Ingress
+# =============================================================================
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: open-metadata.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+# =============================================================================
+# Resources
+# =============================================================================
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: 2
+    memory: 4Gi
+
+# =============================================================================
+# Probes
+# =============================================================================
+livenessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  failureThreshold: 5
+  httpGet:
+    path: /healthcheck
+    port: http-admin
+
+readinessProbe:
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  failureThreshold: 5
+  httpGet:
+    path: /
+    port: http
+
+startupProbe:
+  periodSeconds: 60
+  failureThreshold: 5
+  successThreshold: 1
+  httpGet:
+    path: /healthcheck
+    port: http-admin
+
+# =============================================================================
+# Service Account
+# =============================================================================
+serviceAccount:
+  create: true
+  annotations: {}
+  name:
+
+automountServiceAccountToken: true
+
+# =============================================================================
+# Autres
+# =============================================================================
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+commonLabels: {}
+extraEnvs: []
+extraInitContainers: []
+extraVolumes: []
+extraVolumeMounts: []
+sidecars: []
+imagePullSecrets: []
+
+# =============================================================================
+# Monitoring
+# =============================================================================
+serviceMonitor:
+  enabled: false
+  interval: 30s
+  labels: {}
+  annotations: {}
+
+# =============================================================================
+# Network Policy & PDB
+# =============================================================================
+networkPolicy:
+  enabled: false
+
+podDisruptionBudget:
+  enabled: false
+  config:
+    maxUnavailable: 1
+    minAvailable: 1
