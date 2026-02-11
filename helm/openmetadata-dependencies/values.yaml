@@ -70,11 +70,10 @@ opensearch:
   config:
     opensearch.yml: |
       plugins.security.disabled: true
+      discovery.type: single-node
   extraEnvs:
     - name: DISABLE_SECURITY_PLUGIN
       value: "true"
-    - name: discovery.type
-      value: single-node
 
 # =============================================================================
 # Airflow
