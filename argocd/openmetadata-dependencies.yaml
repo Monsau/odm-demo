@@ -13,6 +13,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "0"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+    # NOTE: removed foreground finalizer to avoid stuck deletes
 spec:
   project: openmetadata
 

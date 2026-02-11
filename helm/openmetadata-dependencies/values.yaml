@@ -135,6 +135,10 @@ airflow:
       registry: docker.io
       repository: bitnamilegacy/postgresql
       tag: 16.1.0-debian-11-r20
+    auth:
+      enablePostgresUser: true
+      postgresPassword: postgres
+      database: airflow
     persistence:
       enabled: true
       # storageClass: ""
