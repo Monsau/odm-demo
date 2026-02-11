@@ -85,7 +85,7 @@ airflow:
       repository: docker.getcollate.io/openmetadata/ingestion
       tag: "1.11.8"
       pullPolicy: Always
-    executor: LocalExecutor
+    executor: KubernetesExecutor
     config:
       AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
     users:
