@@ -200,3 +200,13 @@ airflow:
     persistence:
       enabled: false
       size: 1Gi
+  ingress:
+    apiServer:
+      enabled: true
+      ingressClassName: traefik
+      annotations: {}
+      hosts:
+        - name: airflow.local
+          path: /
+      tls:
+        enabled: false

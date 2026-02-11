@@ -228,24 +228,23 @@ openmetadata:
 # Service Kubernetes
 # =============================================================================
 service:
-  type: NodePort
+  type: ClusterIP
   port: 8585
   adminPort: 8586
-  nodePort: 30585
   annotations: {}
 
 # =============================================================================
 # Ingress
 # =============================================================================
 ingress:
-  enabled: false
-  className: ""
+  enabled: true
+  className: traefik
   annotations: {}
   hosts:
-    - host: open-metadata.local
+    - host: openmetadata.local
       paths:
         - path: /
-          pathType: ImplementationSpecific
+          pathType: Prefix
   tls: []
 
 # =============================================================================
