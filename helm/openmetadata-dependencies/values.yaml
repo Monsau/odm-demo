@@ -148,10 +148,6 @@ airflow:
     waitForMigrations:
       enabled: false
     extraInitContainers: []
-    startupProbe:
-      timeoutSeconds: 60
-      failureThreshold: 10
-      periodSeconds: 10
     livenessProbe:
       timeoutSeconds: 60
       failureThreshold: 5
@@ -166,10 +162,6 @@ airflow:
     waitForMigrations:
       enabled: false
     extraInitContainers: []
-    startupProbe:
-      timeoutSeconds: 60
-      failureThreshold: 10
-      periodSeconds: 10
     livenessProbe:
       timeoutSeconds: 60
       failureThreshold: 5
