@@ -5,10 +5,9 @@
 # =============================================================================
 
 # -- StorageClass à utiliser pour tous les PVC
-# Décommenter et renseigner si pas de StorageClass par défaut sur le cluster.
-# Exemples: "standard", "gp2", "managed-premium", "local-path"
-# global:
-#   storageClass: ""
+# On le force à "local-path" pour rendre le déploiement déterministe sur k3s.
+global:
+  storageClass: local-path
 
 # =============================================================================
 # MySQL
