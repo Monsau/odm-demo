@@ -95,15 +95,23 @@ airflow:
         email: admin@openmetadata.org
         firstName: Admin
         lastName: User
-  # -- Disable Helm hooks so ArgoCD manages these Jobs as regular resources
-  # Without this, the migration Job is a post-install hook that ArgoCD never triggers
+  # -- Static secret key for Airflow webserver (required for JWT token auth)
+  webserverSecretKey: "a5f8c3e2d1b9a7f6e4c3b2a1f9e8d7c6b5a4f3e2d1c9b8a7f6e5d4c3b2a1f0e9"
+  # -- Workaround for Airflow 3 + MySQL compatibility: downgrade FAB provider
+  env:
+    - name: _PIP_ADDITIONAL_REQUIREMENTS
+      value: "apache-airflow-providers-fab==2.4.4"
+  # -- Disable Helm hooks so ArgoCD manages the migration Job as a regular resource
   migrateDatabaseJob:
     useHelmHooks: false
   createUserJob:
     useHelmHooks: false
-  # NOTE: This chart deploys Airflow as separate components (apiServer, scheduler,
-  # dagProcessor, triggerer). Keep resources low for single-node demo clusters.
+  # -- Disable waitForMigrations on ALL components to avoid init container deadlock
+  # (from working prod config: the migration Job runs independently)
   apiServer:
+    waitForMigrations:
+      enabled: false
+    extraInitContainers: []
     resources:
       requests:
         cpu: 50m
@@ -112,6 +120,9 @@ airflow:
         cpu: 500m
         memory: 1Gi
   scheduler:
+    waitForMigrations:
+      enabled: false
+    extraInitContainers: []
     resources:
       requests:
         cpu: 50m
@@ -120,6 +131,9 @@ airflow:
         cpu: 500m
         memory: 1Gi
   dagProcessor:
+    waitForMigrations:
+      enabled: false
+    extraInitContainers: []
     resources:
       requests:
         cpu: 50m
@@ -128,6 +142,9 @@ airflow:
         cpu: 500m
         memory: 1Gi
   triggerer:
+    waitForMigrations:
+      enabled: false
+    extraInitContainers: []
     resources:
       requests:
         cpu: 25m
@@ -135,6 +152,11 @@ airflow:
       limits:
         cpu: 500m
         memory: 1Gi
+  # -- Flower & Redis not needed with LocalExecutor
+  flower:
+    enabled: false
+  redis:
+    enabled: false
   postgresql:
     enabled: true
     image:
@@ -147,17 +169,14 @@ airflow:
       database: airflow
     persistence:
       enabled: true
-      # storageClass: ""
       size: 5Gi
       accessModes:
         - ReadWriteOnce
   dags:
     persistence:
       enabled: true
-      # storageClass: ""
       size: 1Gi
   logs:
     persistence:
       enabled: false
-      # storageClass: ""
       size: 1Gi
