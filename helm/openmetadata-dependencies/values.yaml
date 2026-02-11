@@ -95,6 +95,14 @@ airflow:
         email: admin@openmetadata.org
         firstName: Admin
         lastName: User
+  # -- Disable Helm hooks so ArgoCD manages these Jobs as regular resources
+  # Without this, the migration Job is a post-install hook that ArgoCD never triggers
+  migrateDatabaseJob:
+    enabled: true
+    useHelmHooks: false
+  createUserJob:
+    enabled: true
+    useHelmHooks: false
   # NOTE: This chart deploys Airflow as separate components (apiServer, scheduler,
   # dagProcessor, triggerer). Keep resources low for single-node demo clusters.
   apiServer:
