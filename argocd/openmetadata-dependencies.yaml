@@ -111,15 +111,11 @@ spec:
               enabled: true
               # storageClass: ""
               size: 1Gi
-              accessModes:
-                - ReadWriteOnce
           logs:
             persistence:
               enabled: true
               # storageClass: ""
               size: 1Gi
-              accessModes:
-                - ReadWriteOnce
 
   destination:
     server: https://kubernetes.default.svc
