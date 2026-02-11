@@ -1,38 +1,40 @@
 # =============================================================================
-# ArgoCD Application - Secrets OpenMetadata
-# Déploie les secrets Kubernetes depuis le repo Git
-# Sync wave -1 pour s'assurer qu'ils sont créés AVANT les apps
+# ArgoCD Application (App-of-Apps) - OpenMetadata
+# Create THIS app first in ArgoCD; it will then create/sync the rest from ./argocd
 # =============================================================================
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: openmetadata-infra
+  name: openmetadata-root
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: openmetadata
-  annotations:
-    argocd.argoproj.io/sync-wave: "-2"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: openmetadata
+  # Use default project for bootstrap (it creates the AppProject + child Applications)
+  project: default
 
   source:
     repoURL: git@github.com:Monsau/odm-demo.git
     targetRevision: main
-    path: k8s
-    directory:
-      include: "*.yaml"
-      exclude: "*.example"
+    path: argocd
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: openmetadata
+    namespace: argocd
 
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
-
+      - ServerSideApply=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

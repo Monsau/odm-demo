@@ -60,6 +60,41 @@ cp k8s/secrets.yaml.example k8s/secrets.yaml
 # Modifier les mots de passe dans k8s/secrets.yaml
 ```
 
+## Déploiement via ArgoCD (GitOps)
+
+Prérequis:
+- ArgoCD installé sur le cluster (namespace `argocd`)
+- Le repo Git `git@github.com:Monsau/odm-demo.git` est enregistré dans ArgoCD (SSH)
+
+### Bootstrap (AppProject + Applications)
+
+Option 1 (recommandé): créer l'application racine ArgoCD (app-of-apps). Elle va ensuite créer/synchroniser automatiquement le reste.
+
+```bash
+kubectl apply -f argocd/openmetadata-root.yaml
+```
+
+Option 2: appliquer directement les manifests (sans app-of-apps).
+
+```bash
+kubectl apply -k argocd
+```
+
+### Clear + redeploy (Windows / PowerShell)
+
+Supprime le namespace `openmetadata` (incluant les PVC du namespace) puis ré-applique les manifests ArgoCD.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\redeploy.ps1
+```
+
+### Clear + redeploy (Linux / WSL / Git Bash)
+
+```bash
+chmod +x scripts/redeploy.sh
+./scripts/redeploy.sh
+```
+
 ### 2. Déployer avec Make
 
 ```bash

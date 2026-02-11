@@ -9,116 +9,27 @@ metadata:
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: openmetadata
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
-  project: default
+  project: openmetadata
 
-  source:
-    repoURL: https://helm.open-metadata.org
-    chart: openmetadata-dependencies
-    targetRevision: 1.11.8
-    helm:
-      valueFiles: []
-      values: |
-        mysql:
-          enabled: true
-          fullnameOverride: "mysql"
-          image:
-            tag: "8.0"
-          auth:
-            rootPassword: ""
-            database: openmetadata_db
-            username: openmetadata_user
-            existingSecret: mysql-secrets
-          primary:
-            persistence:
-              enabled: true
-              # storageClass: ""
-              size: 5Gi
-              accessModes:
-                - ReadWriteOnce
-            resources:
-              requests:
-                cpu: 250m
-                memory: 512Mi
-              limits:
-                cpu: 1
-                memory: 2Gi
-          initdbScripts:
-            init_openmetadata_db_scripts.sql: |
-              CREATE DATABASE IF NOT EXISTS openmetadata_db;
-              CREATE USER IF NOT EXISTS 'openmetadata_user'@'%' IDENTIFIED BY 'openmetadata_password';
-              GRANT ALL PRIVILEGES ON openmetadata_db.* TO 'openmetadata_user'@'%';
-              FLUSH PRIVILEGES;
+  # ---------------------------------------------------------------------------
+  # Sources multiples : chart Helm + values depuis le repo Git
+  # ---------------------------------------------------------------------------
+  sources:
+    - repoURL: https://helm.open-metadata.org
+      chart: openmetadata-dependencies
+      targetRevision: 1.11.8
+      helm:
+        valueFiles:
+          - $values/helm/openmetadata-dependencies/values.yaml
 
-        opensearch:
-          enabled: true
-          fullnameOverride: "opensearch"
-          clusterName: "opensearch"
-          replicas: 1
-          minimumMasterNodes: 1
-          singleNode: true
-          resources:
-            requests:
-              cpu: 250m
-              memory: 1Gi
-            limits:
-              cpu: 1
-              memory: 2Gi
-          persistence:
-            enabled: true
-            # storageClass: ""
-            size: 5Gi
-            accessModes:
-              - ReadWriteOnce
-          config:
-            opensearch.yml: |
-              plugins.security.disabled: true
-              discovery.type: single-node
-          extraEnvs:
-            - name: DISABLE_SECURITY_PLUGIN
-              value: "true"
-
-        airflow:
-          enabled: true
-          airflow:
-            image:
-              repository: docker.getcollate.io/openmetadata/ingestion
-              tag: "1.11.8"
-              pullPolicy: Always
-            executor: LocalExecutor
-            config:
-              AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
-            users:
-              - username: admin
-                password: admin
-                role: Admin
-                email: admin@openmetadata.org
-                firstName: Admin
-                lastName: User
-          postgresql:
-            enabled: true
-            image:
-              registry: docker.io
-              repository: bitnamilegacy/postgresql
-              tag: 16.1.0-debian-11-r20
-            persistence:
-              enabled: true
-              # storageClass: ""
-              size: 5Gi
-              accessModes:
-                - ReadWriteOnce
-          dags:
-            persistence:
-              enabled: true
-              # storageClass: ""
-              size: 1Gi
-          logs:
-            persistence:
-              enabled: true
-              # storageClass: ""
-              size: 1Gi
+    - repoURL: git@github.com:Monsau/odm-demo.git
+      targetRevision: main
+      ref: values
 
   destination:
     server: https://kubernetes.default.svc
@@ -131,6 +42,8 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
     retry:
       limit: 5
       backoff:
