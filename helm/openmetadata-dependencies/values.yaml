@@ -5,9 +5,10 @@
 # =============================================================================
 
 # -- StorageClass à utiliser pour tous les PVC
-# On le force à "local-path" pour rendre le déploiement déterministe sur k3s.
-global:
-  storageClass: local-path
+# Pas besoin de forcer : local-path est déjà la StorageClass par défaut du cluster.
+# Forcer global.storageClass cause des erreurs "Forbidden" sur les StatefulSets existants.
+# global:
+#   storageClass: local-path
 
 # =============================================================================
 # MySQL
