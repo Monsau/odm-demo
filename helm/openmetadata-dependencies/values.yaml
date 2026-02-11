@@ -127,12 +127,6 @@ airflow:
     persistence:
       enabled: true
       # storageClass: ""
-    postgresql:
-      enabled: true
-      image:
-        registry: docker.io
-        repository: bitnamilegacy/postgresql
-        tag: 16.1.0-debian-11-r20
       size: 1Gi
   logs:
     persistence:
