@@ -99,6 +99,10 @@ spec:
                 lastName: User
           postgresql:
             enabled: true
+            image:
+              registry: docker.io
+              repository: bitnami/postgresql
+              tag: 16.1.0-debian-11-r20
             persistence:
               enabled: true
               # storageClass: ""
