@@ -126,7 +126,7 @@ openmetadata:
     fernetkey:
       value: "jJ/9sz0g0OHxsfxOoSfdFdmk3ysNmPRnH3TUAbz3IHA="
       secretRef: ""
-      secretKef: ""
+      secretKey: ""
 
     # -------------------------------------------------------------------------
     # Serveur OpenMetadata
@@ -162,8 +162,8 @@ openmetadata:
     # Secrets Manager
     # -------------------------------------------------------------------------
     secretsManager:
-      enabled: true
-      provider: ""
+      enabled: false
+      provider: in-memory
       prefix: ""
       tags: []
       additionalParameters:
@@ -186,18 +186,18 @@ openmetadata:
         origin: ""
       hsts:
         enabled: false
-        includeSubDomains: true
+        includeSubDomains: "true"
         maxAge: "365 days"
-        preload: true
+        preload: "true"
       uriPath: "/api"
       xssProtection:
         block: true
         enabled: false
         onXss: true
-      referrer-policy:
+      referrerPolicy:
         enabled: false
         option: "SAME_ORIGIN"
-      permission-policy:
+      permissionPolicy:
         enabled: false
         option: ""
 
@@ -330,5 +330,5 @@ networkPolicy:
 podDisruptionBudget:
   enabled: false
   config:
-    maxUnavailable: 1
-    minAvailable: 1
+    maxUnavailable: "1"
+    minAvailable: "1"
