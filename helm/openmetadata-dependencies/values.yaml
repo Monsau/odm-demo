@@ -112,39 +112,64 @@ airflow:
     waitForMigrations:
       enabled: false
     extraInitContainers: []
+    startupProbe:
+      timeoutSeconds: 60
+      failureThreshold: 10
+      periodSeconds: 10
+    livenessProbe:
+      timeoutSeconds: 60
+      failureThreshold: 5
     resources:
       requests:
-        cpu: 50m
-        memory: 256Mi
+        cpu: 100m
+        memory: 512Mi
       limits:
-        cpu: 500m
-        memory: 1Gi
+        cpu: 1
+        memory: 2Gi
   scheduler:
     waitForMigrations:
       enabled: false
     extraInitContainers: []
+    startupProbe:
+      timeoutSeconds: 60
+      failureThreshold: 10
+      periodSeconds: 10
+    livenessProbe:
+      timeoutSeconds: 60
+      failureThreshold: 5
     resources:
       requests:
-        cpu: 50m
-        memory: 256Mi
+        cpu: 100m
+        memory: 512Mi
       limits:
-        cpu: 500m
-        memory: 1Gi
+        cpu: 1
+        memory: 2Gi
   dagProcessor:
     waitForMigrations:
       enabled: false
     extraInitContainers: []
+    startupProbe:
+      timeoutSeconds: 60
+      failureThreshold: 10
+      periodSeconds: 10
+    livenessProbe:
+      timeoutSeconds: 60
+      failureThreshold: 5
     resources:
       requests:
-        cpu: 50m
-        memory: 256Mi
+        cpu: 100m
+        memory: 512Mi
       limits:
-        cpu: 500m
-        memory: 1Gi
+        cpu: 1
+        memory: 2Gi
   triggerer:
     waitForMigrations:
       enabled: false
     extraInitContainers: []
+    startupProbe:
+      timeoutSeconds: 60
+      failureThreshold: 10
+      periodSeconds: 10
     livenessProbe:
       timeoutSeconds: 60
       failureThreshold: 5
