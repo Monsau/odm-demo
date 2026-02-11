@@ -145,14 +145,17 @@ airflow:
     waitForMigrations:
       enabled: false
     extraInitContainers: []
+    livenessProbe:
+      timeoutSeconds: 60
+      failureThreshold: 5
     resources:
       requests:
-        cpu: 25m
-        memory: 256Mi
+        cpu: 100m
+        memory: 512Mi
       limits:
         cpu: 500m
         memory: 1Gi
-  # -- Flower & Redis not needed with LocalExecutor
+  # -- Flower & Redis not needed with KubernetesExecutor
   flower:
     enabled: false
   redis:
