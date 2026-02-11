@@ -147,6 +147,6 @@ airflow:
       size: 1Gi
   logs:
     persistence:
-      enabled: true
+      enabled: false
       # storageClass: ""
       size: 1Gi
