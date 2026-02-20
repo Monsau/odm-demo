@@ -279,7 +279,8 @@ service:
 # Ingress
 # =============================================================================
 ingress:
-  enabled: true
+  # Disabled: custom ingress in k8s/ingress-openmetadata.yaml routes via oauth2-proxy
+  enabled: false
   className: traefik
   annotations: {}
   hosts:

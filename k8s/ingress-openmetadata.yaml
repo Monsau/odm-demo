@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openmetadata
+  namespace: openmetadata
+  annotations:
+    # Route all traffic through oauth2-proxy for SSO authentication
+    # oauth2-proxy handles JWKS endpoint pass-through via --skip-auth-regex
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: openmetadata.192.168.11.150.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: oauth2-proxy
+                port:
+                  number: 4180
