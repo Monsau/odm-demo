@@ -11,7 +11,7 @@ from selenium.webdriver.firefox.service import Service as FirefoxService
 # ─── URLs (overridables via variables d'environnement) ───────────────────────
 OPENMETADATA_URL = os.getenv("OM_URL", "http://openmetadata.local")
 KEYCLOAK_URL     = os.getenv("KC_URL", "http://auth.192.168.11.150.nip.io")
-REALM            = os.getenv("KC_REALM", "atlas-voyage")
+REALM            = os.getenv("KC_REALM", "tour-operator")
 
 # ─── Credentials de test ─────────────────────────────────────────────────────
 TEST_USER     = os.getenv("TEST_USER",     "testuser")

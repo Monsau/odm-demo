@@ -37,9 +37,9 @@ openmetadata:
         - "http://openmetadata:8585/api/v1/system/config/jwks"
         # Keycloak JWKS (certs) endpoint
         # Use the in-cluster service FQDN so OpenMetadata pods don't depend on external DNS.
-        - "http://keycloak.auth.svc.cluster.local:8080/realms/atlas-voyage/protocol/openid-connect/certs"
+        - "http://keycloak.auth.svc.cluster.local:8080/realms/tour-operator/protocol/openid-connect/certs"
       # Keycloak Authorization Endpoint (per OM Keycloak SSO guide)
-      authority: "http://auth.192.168.11.150.nip.io/realms/atlas-voyage/protocol/openid-connect/auth"
+      authority: "http://auth.192.168.11.150.nip.io/realms/tour-operator/protocol/openid-connect/auth"
       # Kept for compatibility (some flows read these). Prefer setting clientId/secret in oidcConfiguration below.
       clientId: ""
       callbackUrl: "http://openmetadata.local/callback"
@@ -63,7 +63,7 @@ openmetadata:
           secretKey: openmetadata-oidc-client-secret
         scope: "openid email profile"
         # Use in-cluster discovery URI so OM can fetch metadata even if `auth.demo.ai` is not resolvable from pods.
-        discoveryUri: "http://keycloak.auth.svc.cluster.local:8080/realms/atlas-voyage/.well-known/openid-configuration"
+        discoveryUri: "http://keycloak.auth.svc.cluster.local:8080/realms/tour-operator/.well-known/openid-configuration"
         useNonce: true
         preferredJwsAlgorithm: RS256
         responseType: code

@@ -39,7 +39,7 @@ spec:
           args:
             # Provider OIDC Keycloak
             - --provider=oidc
-            - --oidc-issuer-url=http://auth.192.168.11.150.nip.io/realms/atlas-voyage
+            - --oidc-issuer-url=http://auth.192.168.11.150.nip.io/realms/tour-operator
             - --client-id=openmetadata
             - --redirect-url=http://openmetadata.local/oauth2/callback
             # Upstream (OpenMetadata)
