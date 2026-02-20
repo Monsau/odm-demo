@@ -4,8 +4,8 @@ metadata:
   name: openmetadata
   namespace: openmetadata
   annotations:
-    # Route all traffic through oauth2-proxy for SSO authentication
-    # oauth2-proxy handles JWKS endpoint pass-through via --skip-auth-regex
+# Route all traffic directly to OpenMetadata.
+  # OpenMetadata handles SSO via its native OIDC flow (shows "Sign In" button → Keycloak).
 spec:
   ingressClassName: traefik
   rules:
@@ -16,9 +16,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: oauth2-proxy
+                name: openmetadata
                 port:
-                  number: 4180
+                  number: 8585
     - host: openmetadata.local
       http:
         paths:
@@ -26,6 +26,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: oauth2-proxy
+                name: openmetadata
                 port:
-                  number: 4180
+                  number: 8585
