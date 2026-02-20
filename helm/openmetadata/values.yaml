@@ -25,18 +25,60 @@ openmetadata:
     # -------------------------------------------------------------------------
     authentication:
       enabled: true
-      provider: basic
-      clientType: public
+      # Keycloak / OIDC (SSO)
+      # NOTE:
+      # - `provider: custom-oidc` is the recommended setting for Keycloak.
+      # - Update the placeholders (realm, hostnames, etc.) to match your Keycloak + Ingress.
+      provider: custom-oidc
+      # Use `confidential` for Authorization Code flow (client secret required)
+      # Use `public` for implicit/public clients (no secret)
+      clientType: confidential
       publicKeys:
         - "http://openmetadata:8585/api/v1/system/config/jwks"
-      authority: "https://accounts.google.com"
+        # Keycloak JWKS (certs) endpoint
+        # Use the in-cluster service FQDN so OpenMetadata pods don't depend on external DNS.
+        - "http://keycloak.auth.svc.cluster.local:8080/realms/atlas-voyage/protocol/openid-connect/certs"
+      # Keycloak Authorization Endpoint (per OM Keycloak SSO guide)
+      authority: "http://auth.192.168.11.150.nip.io/realms/atlas-voyage/protocol/openid-connect/auth"
+      # Kept for compatibility (some flows read these). Prefer setting clientId/secret in oidcConfiguration below.
       clientId: ""
-      callbackUrl: ""
+      callbackUrl: "http://openmetadata.192.168.11.150.nip.io/callback"
+      responseType: code
       enableSelfSignup: true
       jwtPrincipalClaims:
         - email
         - preferred_username
         - sub
+
+      # OIDC Authorization Code Flow (recommended)
+      oidcConfiguration:
+        enabled: true
+        # Informational label used by OM in some flows; keep `custom` for Keycloak.
+        oidcType: "custom"
+        clientId:
+          secretRef: oidc-secrets
+          secretKey: openmetadata-oidc-client-id
+        clientSecret:
+          secretRef: oidc-secrets
+          secretKey: openmetadata-oidc-client-secret
+        scope: "openid email profile"
+        # Use in-cluster discovery URI so OM can fetch metadata even if `auth.demo.ai` is not resolvable from pods.
+        discoveryUri: "http://keycloak.auth.svc.cluster.local:8080/realms/atlas-voyage/.well-known/openid-configuration"
+        useNonce: true
+        preferredJwsAlgorithm: RS256
+        responseType: code
+        promptType: "consent"
+        # Leave this as `true` unless you explicitly want PKCE.
+        disablePkce: true
+        callbackUrl: "http://openmetadata.192.168.11.150.nip.io/callback"
+        serverUrl: "http://openmetadata.192.168.11.150.nip.io"
+        clientAuthenticationMethod: client_secret_post
+        tenant: ""
+        maxClockSkew: ""
+        tokenValidity: "3600"
+        customParams: '{}'
+        maxAge: "0"
+        sessionExpiry: "604800"
 
     # -------------------------------------------------------------------------
     # Authorizer
@@ -241,7 +283,7 @@ ingress:
   className: traefik
   annotations: {}
   hosts:
-    - host: openmetadata.local
+    - host: openmetadata.192.168.11.150.nip.io
       paths:
         - path: /
           pathType: Prefix

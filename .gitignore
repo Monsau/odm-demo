@@ -17,3 +17,11 @@ Thumbs.db
 # Temp
 *.tmp
 *.bak
+.tmp/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+tests/reports/
+tests/__pycache__/

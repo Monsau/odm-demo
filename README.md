@@ -116,6 +116,45 @@ make port-forward
 # Login: admin / admin
 ```
 
+### SSO (Keycloak / OIDC)
+
+Dans ce cluster, Keycloak est exposé via un ingress (namespace `auth`) et le realm initialisé est `atlas-voyage`.
+
+Notes pratiques pour un environnement "local + Traefik":
+- Pour éviter de modifier le fichier hosts, ce repo utilise des FQDN nip.io basés sur l'IP Traefik: `192.168.11.150`.
+- OpenMetadata: `http://openmetadata.192.168.11.150.nip.io`
+- Keycloak: `http://auth.192.168.11.150.nip.io`
+- Callback OIDC: `http://openmetadata.192.168.11.150.nip.io/callback`
+
+Configuration "propre" côté OpenMetadata:
+- `authority` utilise l'URL *publique* Keycloak (`auth.demo.ai`) car c'est celle utilisée par le navigateur pour la redirection.
+- `discoveryUri` et les JWKS (`publicKeys`) utilisent l'URL *interne* Kubernetes (`keycloak.auth.svc.cluster.local`) pour éviter toute dépendance au DNS externe depuis les pods.
+
+#### Vérification Keycloak (issuer / endpoints)
+
+Tu peux vérifier ce que Keycloak annonce via le discovery document (depuis le cluster) :
+
+```bash
+kubectl -n openmetadata run tmp-curl --rm -i --restart=Never --image=curlimages/curl:8.6.0 -- \
+  sh -c "curl -sS http://keycloak.auth.svc.cluster.local:8080/realms/atlas-voyage/.well-known/openid-configuration \
+  | tr ',' '\\n' | grep -E 'issuer|authorization_endpoint|token_endpoint|jwks_uri' | head -n 20"
+```
+
+État constaté au 2026-02-20:
+- `token_endpoint` et `jwks_uri` sont internes (OK pour OpenMetadata)
+- `issuer` et `authorization_endpoint` annoncent `https://auth.demo.ai:8443/...` (pas idéal si ton ingress Keycloak est en HTTP/80)
+
+#### Fix "propre" côté Keycloak (GitOps)
+
+Keycloak est géré par l'Application ArgoCD `auth` (repo `https://github.com/Monsau/auth.git`, chemin `charts/auth`).
+Pour avoir des URLs cohérentes, il faut ajuster la config Keycloak afin que le discovery document annonce le bon scheme/port.
+
+Selon ton choix:
+- **HTTP**: forcer l'URL publique à `http://auth.demo.ai` (port 80)
+- **HTTPS**: activer TLS sur l'ingress `auth.demo.ai` et forcer l'URL publique à `https://auth.demo.ai` (port 443)
+
+Dans tous les cas, l'objectif est de supprimer le `:8443` et d'avoir un `issuer` cohérent avec l'URL réellement utilisée par le navigateur.
+
 ## Commandes disponibles
 
 | Commande               | Description                                    |
@@ -255,6 +294,12 @@ kubectl create secret generic mysql-secrets \
   -n openmetadata
 kubectl create secret generic airflow-secrets \
   --from-literal=openmetadata-airflow-password=admin \
+  -n openmetadata
+
+# (Optionnel) Si vous activez l'auth OIDC / Keycloak
+kubectl create secret generic oidc-secrets \
+  --from-literal=openmetadata-oidc-client-id=<client_id> \
+  --from-literal=openmetadata-oidc-client-secret=<client_secret> \
   -n openmetadata
 ```
 

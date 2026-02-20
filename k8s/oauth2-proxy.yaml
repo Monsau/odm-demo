@@ -1,0 +1,112 @@
+# =============================================================================
+# oauth2-proxy - Auth reverse-proxy devant OpenMetadata
+# Architecture : Ingress → oauth2-proxy (4180) → openmetadata (8585)
+#
+# Prérequis Kubernetes (namespace openmetadata) :
+#   kubectl -n openmetadata create secret generic oauth2-proxy-secrets \
+#     --from-literal=OAUTH2_PROXY_CLIENT_SECRET=<secret_keycloak_client> \
+#     --from-literal=OAUTH2_PROXY_COOKIE_SECRET=<random_16b_base64>
+#
+# Générer OAUTH2_PROXY_COOKIE_SECRET :
+#   python3 -c "import secrets,base64; print(base64.urlsafe_b64encode(secrets.token_bytes(16)).decode())"
+# =============================================================================
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth2-proxy
+  namespace: openmetadata
+  labels:
+    app: oauth2-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        app: oauth2-proxy
+    spec:
+      containers:
+        - name: oauth2-proxy
+          image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 4180
+          args:
+            # Provider OIDC Keycloak
+            - --provider=oidc
+            - --oidc-issuer-url=http://auth.192.168.11.150.nip.io/realms/atlas-voyage
+            - --client-id=openmetadata
+            - --redirect-url=http://openmetadata.192.168.11.150.nip.io/oauth2/callback
+            # Upstream (OpenMetadata)
+            - --upstream=http://openmetadata:8585
+            # Comportement auth
+            - --email-domain=*
+            - --skip-provider-button=true
+            - --insecure-oidc-allow-unverified-email=true
+            # HTTP (pas de TLS en bout de chaîne ici)
+            - --cookie-secure=false
+            - --cookie-samesite=lax
+            # Forwarding vers upstream : access token + header Authorization Bearer
+            - --pass-access-token=true
+            - --pass-authorization-header=true
+            - --set-xauthrequest=true
+            # Chemins publics (JWKS, health, assets)
+            - --skip-auth-regex=^/api/v1/system/config/jwks
+            - --skip-auth-regex=^/healthcheck
+            - --skip-auth-regex=^/_next/static/.*
+            # Serveur
+            - --http-address=0.0.0.0:4180
+          env:
+            # Client secret Keycloak (depuis oauth2-proxy-secrets)
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-secrets
+                  key: OAUTH2_PROXY_CLIENT_SECRET
+            # Cookie secret (depuis oauth2-proxy-secrets)
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy-secrets
+                  key: OAUTH2_PROXY_COOKIE_SECRET
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 4180
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 4180
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth2-proxy
+  namespace: openmetadata
+  labels:
+    app: oauth2-proxy
+spec:
+  selector:
+    app: oauth2-proxy
+  ports:
+    - name: http
+      port: 4180
+      targetPort: 4180
+  type: ClusterIP
