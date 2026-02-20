@@ -42,7 +42,7 @@ openmetadata:
       authority: "http://auth.192.168.11.150.nip.io/realms/atlas-voyage/protocol/openid-connect/auth"
       # Kept for compatibility (some flows read these). Prefer setting clientId/secret in oidcConfiguration below.
       clientId: ""
-      callbackUrl: "http://openmetadata.192.168.11.150.nip.io/callback"
+      callbackUrl: "http://openmetadata.local/callback"
       responseType: code
       enableSelfSignup: true
       jwtPrincipalClaims:
@@ -70,8 +70,8 @@ openmetadata:
         promptType: "consent"
         # Leave this as `true` unless you explicitly want PKCE.
         disablePkce: true
-        callbackUrl: "http://openmetadata.192.168.11.150.nip.io/callback"
-        serverUrl: "http://openmetadata.192.168.11.150.nip.io"
+        callbackUrl: "http://openmetadata.local/callback"
+        serverUrl: "http://openmetadata.local"
         clientAuthenticationMethod: client_secret_post
         tenant: ""
         maxClockSkew: ""

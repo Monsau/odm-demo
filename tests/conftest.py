@@ -9,7 +9,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.service import Service as FirefoxService
 
 # ─── URLs (overridables via variables d'environnement) ───────────────────────
-OPENMETADATA_URL = os.getenv("OM_URL", "http://openmetadata.192.168.11.150.nip.io")
+OPENMETADATA_URL = os.getenv("OM_URL", "http://openmetadata.local")
 KEYCLOAK_URL     = os.getenv("KC_URL", "http://auth.192.168.11.150.nip.io")
 REALM            = os.getenv("KC_REALM", "atlas-voyage")
 

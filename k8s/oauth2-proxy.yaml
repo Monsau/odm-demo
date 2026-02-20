@@ -41,7 +41,7 @@ spec:
             - --provider=oidc
             - --oidc-issuer-url=http://auth.192.168.11.150.nip.io/realms/atlas-voyage
             - --client-id=openmetadata
-            - --redirect-url=http://openmetadata.192.168.11.150.nip.io/oauth2/callback
+            - --redirect-url=http://openmetadata.local/oauth2/callback
             # Upstream (OpenMetadata)
             - --upstream=http://openmetadata:8585
             # Comportement auth
