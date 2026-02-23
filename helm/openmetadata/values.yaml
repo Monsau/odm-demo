@@ -90,6 +90,7 @@ openmetadata:
       initialAdmins:
         - admin
         - youssef.elalami
+        - fatima.chraibi
       allowedEmailRegistrationDomains:
         - all
       principalDomain: open-metadata.org
