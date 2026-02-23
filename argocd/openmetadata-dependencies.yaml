@@ -36,6 +36,14 @@ spec:
     server: https://kubernetes.default.svc
     namespace: openmetadata
 
+  # Ignore immutable PVC spec fields that ArgoCD cannot patch after creation
+  ignoreDifferences:
+    - group: ""
+      kind: PersistentVolumeClaim
+      jsonPointers:
+        - /spec/storageClassName
+        - /spec/volumeMode
+
   syncPolicy:
     automated:
       prune: true
