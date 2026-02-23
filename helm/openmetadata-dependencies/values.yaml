@@ -198,8 +198,9 @@ airflow:
   dags:
     persistence:
       enabled: true
-      size: 1Gi
-      storageClassName: local-path
+      # -- PVC géré par openmetadata-infra (k8s/pvc-airflow-dags.yaml)
+      # -- existingClaim évite que le chart crée/supprime le PVC → plus de conflit ArgoCD
+      existingClaim: openmetadata-dependencies-dags
   logs:
     persistence:
       enabled: false
