@@ -88,8 +88,6 @@ airflow:
     executor: LocalExecutor
     config:
       AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
-      AIRFLOW__CORE__EXECUTOR: "LocalExecutor"
-      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
     users:
       - username: admin
         password: admin
@@ -100,9 +98,12 @@ airflow:
   # -- Static secret key for Airflow webserver (required for JWT token auth)
   webserverSecretKey: "a5f8c3e2d1b9a7f6e4c3b2a1f9e8d7c6b5a4f3e2d1c9b8a7f6e5d4c3b2a1f0e9"
   # -- Workaround for Airflow 3 + MySQL compatibility: downgrade FAB provider
+  # -- Force LocalExecutor via env var (overrides airflow.cfg)
   env:
     - name: _PIP_ADDITIONAL_REQUIREMENTS
       value: "apache-airflow-providers-fab==2.4.4"
+    - name: AIRFLOW__CORE__EXECUTOR
+      value: "LocalExecutor"
   # -- Disable Helm hooks so ArgoCD manages the migration Job as a regular resource
   migrateDatabaseJob:
     useHelmHooks: false
