@@ -196,6 +196,7 @@ airflow:
     persistence:
       enabled: true
       size: 1Gi
+      storageClassName: local-path
   logs:
     persistence:
       enabled: false
