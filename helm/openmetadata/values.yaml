@@ -89,6 +89,7 @@ openmetadata:
       containerRequestFilter: org.openmetadata.service.security.JwtFilter
       initialAdmins:
         - admin
+        - youssef.elalami
       allowedEmailRegistrationDomains:
         - all
       principalDomain: open-metadata.org
