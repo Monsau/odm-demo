@@ -172,7 +172,7 @@ airflow:
       limits:
         cpu: 500m
         memory: 1Gi
-  # -- Flower & Redis not needed with KubernetesExecutor
+  # -- Flower & Redis not needed with LocalExecutor
   flower:
     enabled: false
   redis:
