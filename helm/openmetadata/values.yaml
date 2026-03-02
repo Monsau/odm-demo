@@ -90,7 +90,7 @@ openmetadata:
       initialAdmins:
         - admin
         - youssef.elalami@demo.ai
-        - fatima.chraibi@demo.ai
+        - to.cfo@demo.ai
         - karim.idrissi@demo.ai
       allowedEmailRegistrationDomains:
         - all
