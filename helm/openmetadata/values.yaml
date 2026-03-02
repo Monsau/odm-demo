@@ -91,10 +91,11 @@ openmetadata:
         - admin
         - youssef.elalami@demo.ai
         - fatima.chraibi@demo.ai
+        - karim.idrissi@demo.ai
       allowedEmailRegistrationDomains:
         - all
       principalDomain: demo.ai
-      enforcePrincipalDomain: false
+      enforcePrincipalDomain: true
       enableSecureSocketConnection: false
 
     # -------------------------------------------------------------------------
