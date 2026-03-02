@@ -89,11 +89,11 @@ openmetadata:
       containerRequestFilter: org.openmetadata.service.security.JwtFilter
       initialAdmins:
         - admin
-        - youssef.elalami
-        - fatima.chraibi
+        - youssef.elalami@demo.ai
+        - fatima.chraibi@demo.ai
       allowedEmailRegistrationDomains:
         - all
-      principalDomain: open-metadata.org
+      principalDomain: demo.ai
       enforcePrincipalDomain: false
       enableSecureSocketConnection: false
 
