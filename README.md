@@ -200,8 +200,8 @@ helm upgrade --install openmetadata open-metadata/openmetadata \
 
 | Composant      | Version |
 |----------------|---------|
-| OpenMetadata   | 1.11.8  |
-| Chart Helm     | 1.11.8  |
+| OpenMetadata   | 1.12.1  |
+| Chart Helm     | 1.12.1  |
 | MySQL          | 8.0     |
 | OpenSearch     | Latest  |
 

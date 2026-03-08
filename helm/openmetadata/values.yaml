@@ -1,7 +1,7 @@
 # =============================================================================
 # OpenMetadata Helm Values
 # Chart: open-metadata/openmetadata
-# Version: 1.11.8
+# Version: 1.12.1
 # Repo: https://helm.open-metadata.org
 # =============================================================================
 
@@ -10,7 +10,7 @@ replicaCount: 1
 image:
   repository: docker.getcollate.io/openmetadata/server
   pullPolicy: Always
-  tag: "1.11.8"
+  tag: "1.12.1"
 
 # -- Nom complet du release Helm
 fullnameOverride: "openmetadata"

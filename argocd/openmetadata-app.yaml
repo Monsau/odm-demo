@@ -24,7 +24,7 @@ spec:
     # Source 1 : Le chart Helm officiel OpenMetadata
     - repoURL: https://helm.open-metadata.org
       chart: openmetadata
-      targetRevision: 1.11.8
+      targetRevision: 1.12.1
       helm:
         valueFiles:
           - $values/helm/openmetadata/values.yaml
