@@ -41,9 +41,7 @@ openmetadata:
       # Keycloak Authorization Endpoint (per OM Keycloak SSO guide)
       authority: "http://auth.192.168.11.150.nip.io/realms/tour-operator/protocol/openid-connect/auth"
       # Client ID must match the Keycloak client
-      clientId:
-        secretRef: oidc-secrets
-        secretKey: openmetadata-oidc-client-id
+      clientId: "openmetadata"
       callbackUrl: "http://openmetadata.192.168.11.150.nip.io/callback"
       responseType: code
       enableSelfSignup: true
