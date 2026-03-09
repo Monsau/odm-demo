@@ -83,7 +83,7 @@ airflow:
   airflow:
     image:
       repository: docker.getcollate.io/openmetadata/ingestion
-      tag: "1.12.1"
+      tag: "1.11.8"
       pullPolicy: Always
     executor: LocalExecutor
     config:
