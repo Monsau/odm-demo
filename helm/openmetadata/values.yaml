@@ -40,8 +40,8 @@ openmetadata:
         - "http://keycloak.auth.svc.cluster.local:8080/realms/tour-operator/protocol/openid-connect/certs"
       # Keycloak Authorization Endpoint (per OM Keycloak SSO guide)
       authority: "http://auth.192.168.11.150.nip.io/realms/tour-operator/protocol/openid-connect/auth"
-      # Kept for compatibility (some flows read these). Prefer setting clientId/secret in oidcConfiguration below.
-      clientId: ""
+      # Client ID registered in Keycloak for the OpenMetadata OIDC client.
+      clientId: "openmetadata"
       callbackUrl: "http://openmetadata.local/callback"
       responseType: code
       enableSelfSignup: true
