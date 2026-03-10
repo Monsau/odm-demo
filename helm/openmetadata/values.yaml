@@ -67,7 +67,7 @@ openmetadata:
         useNonce: true
         preferredJwsAlgorithm: RS256
         responseType: code
-        promptType: "consent"
+        promptType: "login"
         # Leave this as `true` unless you explicitly want PKCE.
         disablePkce: true
         callbackUrl: "http://openmetadata.local/callback"
