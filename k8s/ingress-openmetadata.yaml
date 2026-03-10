@@ -4,8 +4,8 @@ metadata:
   name: openmetadata
   namespace: openmetadata
   annotations:
-    # Route all traffic directly to OpenMetadata.
-    # OpenMetadata handles SSO via its native OIDC flow (shows "Sign In" button → Keycloak).
+# Route all traffic directly to OpenMetadata.
+  # OpenMetadata handles SSO via its native OIDC flow (shows "Sign In" button → Keycloak).
 spec:
   ingressClassName: traefik
   rules:

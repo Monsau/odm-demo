@@ -72,7 +72,7 @@ openmetadata:
         disablePkce: true
         callbackUrl: "http://openmetadata.local/callback"
         serverUrl: "http://openmetadata.local"
-        clientAuthenticationMethod: client_secret_basic
+        clientAuthenticationMethod: client_secret_post
         tenant: ""
         maxClockSkew: ""
         tokenValidity: "3600"
