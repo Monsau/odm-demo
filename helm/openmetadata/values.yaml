@@ -89,9 +89,10 @@ openmetadata:
       containerRequestFilter: org.openmetadata.service.security.JwtFilter
       initialAdmins:
         - admin
-        - youssef.elalami@demo.ai
-        - to.cfo@demo.ai
-        - karim.idrissi@demo.ai
+        - aicha.benjelloun
+        - youssef.elalami
+        - fatima.chraibi
+        - karim.idrissi
       allowedEmailRegistrationDomains:
         - all
       principalDomain: demo.ai
