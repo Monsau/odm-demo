@@ -4,8 +4,8 @@ metadata:
   name: openmetadata
   namespace: openmetadata
   annotations:
-# Route all traffic directly to OpenMetadata.
-  # OpenMetadata handles SSO via its native OIDC flow (shows "Sign In" button → Keycloak).
+    # Route traffic through oauth2-proxy for SSO authentication.
+    # Architecture: Ingress → oauth2-proxy (4180) → openmetadata (8585)
 spec:
   ingressClassName: traefik
   rules:
@@ -16,9 +16,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: openmetadata
+                name: oauth2-proxy
                 port:
-                  number: 8585
+                  number: 4180
     - host: openmetadata.local
       http:
         paths:
@@ -26,6 +26,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: openmetadata
+                name: oauth2-proxy
                 port:
-                  number: 8585
+                  number: 4180
