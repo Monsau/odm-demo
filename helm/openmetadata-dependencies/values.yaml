@@ -95,6 +95,8 @@ airflow:
         email: admin@openmetadata.org
         firstName: Admin
         lastName: User
+  # -- Fernet key for Airflow encryption (must be a valid 32-byte base64 key)
+  fernetKey: "jJ/9sz0g0OHxsfxOoSfdFdmk3ysNmPRnH3TUAbz3IHA="
   # -- Static secret key for Airflow webserver (required for JWT token auth)
   webserverSecretKey: "a5f8c3e2d1b9a7f6e4c3b2a1f9e8d7c6b5a4f3e2d1c9b8a7f6e5d4c3b2a1f0e9"
   # -- Workaround for Airflow 3 + MySQL compatibility: downgrade FAB provider
