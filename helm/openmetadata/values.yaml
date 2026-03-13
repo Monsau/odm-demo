@@ -1,7 +1,7 @@
 # =============================================================================
 # OpenMetadata Helm Values
 # Chart: open-metadata/openmetadata
-# Version: 1.11.13
+# Version: 1.12.1
 # Repo: https://helm.open-metadata.org
 # =============================================================================
 
@@ -10,7 +10,7 @@ replicaCount: 1
 image:
   repository: docker.getcollate.io/openmetadata/server
   pullPolicy: Always
-  tag: "1.11.13"
+  tag: "1.12.1"
 
 # -- Nom complet du release Helm
 fullnameOverride: "openmetadata"
@@ -141,20 +141,25 @@ openmetadata:
     # -------------------------------------------------------------------------
     # Pipeline Service Client (Airflow)
     # -------------------------------------------------------------------------
+    # BREAKING CHANGE 1.12.x: pipelineServiceClientConfig is now nested
+    # under type ("airflow" or "k8s") instead of flat structure.
     pipelineServiceClientConfig:
       enabled: true
-      className: org.openmetadata.service.clients.pipeline.airflow.AirflowRESTClient
-      apiEndpoint: http://openmetadata-dependencies-api-server:8080
+      type: "airflow"
       metadataApiEndpoint: http://openmetadata:8585/api
-      verifySsl: "no-ssl"
-      sslCertificatePath: "/no/path"
-      healthCheckInterval: 300
-      ingestionIpInfoEnabled: false
-      auth:
-        username: admin
-        password:
-          secretRef: airflow-secrets
-          secretKey: openmetadata-airflow-password
+      airflow:
+        className: "org.openmetadata.service.clients.pipeline.airflow.AirflowRESTClient"
+        apiEndpoint: http://openmetadata-dependencies-api-server:8080
+        verifySsl: "no-ssl"
+        sslCertificatePath: "/no/path"
+        healthCheckInterval: 300
+        ingestionIpInfoEnabled: false
+        auth:
+          enabled: true
+          username: admin
+          password:
+            secretRef: airflow-secrets
+            secretKey: openmetadata-airflow-password
 
     # -------------------------------------------------------------------------
     # JWT Token Configuration
@@ -208,8 +213,8 @@ openmetadata:
     # Secrets Manager
     # -------------------------------------------------------------------------
     secretsManager:
-      enabled: false
-      provider: in-memory
+      enabled: true
+      provider: db
       prefix: ""
       tags: []
       additionalParameters:
@@ -313,15 +318,15 @@ livenessProbe:
   periodSeconds: 30
   failureThreshold: 5
   httpGet:
-    path: /healthcheck
-    port: http-admin
+    path: /api/v1/system/health
+    port: http
 
 readinessProbe:
   initialDelaySeconds: 60
   periodSeconds: 30
   failureThreshold: 5
   httpGet:
-    path: /
+    path: /api/v1/system/health
     port: http
 
 startupProbe:
