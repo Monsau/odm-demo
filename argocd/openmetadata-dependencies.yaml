@@ -64,6 +64,7 @@ spec:
       - ServerSideApply=true
       - PrunePropagationPolicy=foreground
       - PruneLast=true
+      - RespectIgnoreDifferences=true
     retry:
       limit: 5
       backoff:
