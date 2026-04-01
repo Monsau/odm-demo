@@ -117,13 +117,6 @@ airflow:
     waitForMigrations:
       enabled: false
     extraInitContainers: []
-    extraVolumes:
-      - name: dag-configs
-        persistentVolumeClaim:
-          claimName: openmetadata-dependencies-dag-configs
-    extraVolumeMounts:
-      - name: dag-configs
-        mountPath: /opt/airflow/dag_generated_configs
     startupProbe:
       timeoutSeconds: 60
       failureThreshold: 30
@@ -142,13 +135,6 @@ airflow:
     waitForMigrations:
       enabled: false
     extraInitContainers: []
-    extraVolumes:
-      - name: dag-configs
-        persistentVolumeClaim:
-          claimName: openmetadata-dependencies-dag-configs
-    extraVolumeMounts:
-      - name: dag-configs
-        mountPath: /opt/airflow/dag_generated_configs
     startupProbe:
       timeoutSeconds: 60
       failureThreshold: 30
@@ -167,13 +153,6 @@ airflow:
     waitForMigrations:
       enabled: false
     extraInitContainers: []
-    extraVolumes:
-      - name: dag-configs
-        persistentVolumeClaim:
-          claimName: openmetadata-dependencies-dag-configs
-    extraVolumeMounts:
-      - name: dag-configs
-        mountPath: /opt/airflow/dag_generated_configs
     livenessProbe:
       timeoutSeconds: 60
       failureThreshold: 5
