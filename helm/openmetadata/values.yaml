@@ -140,27 +140,17 @@ openmetadata:
         enabled: false
 
     # -------------------------------------------------------------------------
-    # Pipeline Service Client (Airflow)
+    # Pipeline Service Client (Mode Natif - sans Airflow)
     # -------------------------------------------------------------------------
     # BREAKING CHANGE 1.12.x: pipelineServiceClientConfig is now nested
     # under type ("airflow" or "k8s") instead of flat structure.
+    # 
+    # NOTE: Utilisation du mode natif "k8s" car le stockage local-path ne supporte pas
+    # ReadWriteMany nécessaire pour partager les DAGs entre les pods Airflow.
     pipelineServiceClientConfig:
       enabled: true
-      type: "airflow"
+      type: "k8s"
       metadataApiEndpoint: http://openmetadata:8585/api
-      airflow:
-        className: "org.openmetadata.service.clients.pipeline.airflow.AirflowRESTClient"
-        apiEndpoint: http://openmetadata-dependencies-api-server:8080
-        verifySsl: "no-ssl"
-        sslCertificatePath: "/no/path"
-        healthCheckInterval: 300
-        ingestionIpInfoEnabled: false
-        auth:
-          enabled: true
-          username: admin
-          password:
-            secretRef: airflow-secrets
-            secretKey: openmetadata-airflow-password
 
     # -------------------------------------------------------------------------
     # JWT Token Configuration
