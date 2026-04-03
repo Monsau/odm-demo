@@ -93,6 +93,7 @@ openmetadata:
         - fatima.chraibi
         - karim.idrissi
         - khadija
+        - mustapha.fonsau
       allowedEmailRegistrationDomains:
         - all
       principalDomain: demo.ai
