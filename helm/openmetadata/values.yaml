@@ -1,7 +1,7 @@
 # =============================================================================
 # OpenMetadata Helm Values
 # Chart: open-metadata/openmetadata
-# Version: 1.12.5
+# Version: 1.13.0
 # Repo: https://helm.open-metadata.org
 # =============================================================================
 
@@ -10,7 +10,7 @@ replicaCount: 1
 image:
   repository: docker.getcollate.io/openmetadata/server
   pullPolicy: Always
-  tag: "1.12.5"
+  tag: "1.13.0"
 
 # -- Nom complet du release Helm
 fullnameOverride: "openmetadata"
@@ -265,6 +265,22 @@ openmetadata:
       enabled: true
       debug: false
       additionalArgs: ""
+
+    # -------------------------------------------------------------------------
+    # RDF / Knowledge Graph (Apache Jena Fuseki - arcaq-k8s)
+    # Service : arcaq-knowledge-graph.arcaq.svc.cluster.local:3030
+    # Dataset : arcaq
+    # -------------------------------------------------------------------------
+    rdf:
+      enabled: true
+      baseUri: "https://open-metadata.org/"
+      storageType: "FUSEKI"
+      remoteEndpoint: "http://arcaq-knowledge-graph.arcaq.svc.cluster.local:3030/arcaq"
+      username: "admin"
+      password:
+        secretRef: jena-secrets
+        secretKey: openmetadata-jena-password
+      dataset: "arcaq"
 
 # =============================================================================
 # Service Kubernetes

@@ -5,21 +5,24 @@ Déploiement d'[OpenMetadata](https://open-metadata.org/) sur Kubernetes en util
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                   Kubernetes Cluster                │
-│                                                     │
-│  ┌─────────────┐  ┌────────────┐  ┌──────────────┐ │
-│  │  OpenMetadata│  │  OpenSearch│  │    MySQL     │ │
-│  │   Server     │  │            │  │              │ │
-│  │  :8585       │  │  :9200     │  │  :3306       │ │
-│  └──────┬───────┘  └────────────┘  └──────────────┘ │
-│         │                                           │
-│  ┌──────┴───────┐                                   │
-│  │   Airflow    │                                   │
-│  │  (Ingestion) │                                   │
-│  │  :8080       │                                   │
-│  └──────────────┘                                   │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                      Kubernetes Cluster                         │
+│                                                                 │
+│  namespace: openmetadata                                        │
+│  ┌─────────────────┐  ┌────────────┐  ┌──────────────┐         │
+│  │  OpenMetadata   │  │ OpenSearch │  │    MySQL     │         │
+│  │   Server 1.13   │  │   :9200    │  │   :3306      │         │
+│  │   :8585         │  └────────────┘  └──────────────┘         │
+│  └────────┬────────┘                                           │
+│           │  (cross-namespace RDF)                             │
+│  namespace: arcaq                                               │
+│  ┌─────────────────┐                                           │
+│  │  Apache Jena    │                                           │
+│  │  Fuseki 4.8     │                                           │
+│  │  :3030          │                                           │
+│  │  dataset: arcaq │                                           │
+│  └─────────────────┘                                           │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ## Prérequis
@@ -51,14 +54,45 @@ Déploiement d'[OpenMetadata](https://open-metadata.org/) sur Kubernetes en util
 └── README.md
 ```
 
-## Déploiement rapide
+## Déploiement rapide (démo)
 
-### 1. Configurer les secrets
+### Checklist pré-déploiement
+
+| # | Étape | Commande / Action |
+|---|-------|-------------------|
+| 1 | arcaq-k8s déployé et Jena Fuseki `Running` | `kubectl get pods -n arcaq` |
+| 2 | Dataset `arcaq` créé dans Fuseki | `kubectl -n arcaq exec deploy/arcaq-knowledge-graph -- curl -sf localhost:3030/$/ping` |
+| 3 | Keycloak `tour-operator` realm actif | `https://auth.192.168.11.150.nip.io` |
+| 4 | Secrets configurés | `cp k8s/secrets.yaml.example k8s/secrets.yaml` puis éditer |
+| 5 | Repo Helm à jour | `make upgrade-check` |
+
+### Déploiement en une commande
 
 ```bash
-cp k8s/secrets.yaml.example k8s/secrets.yaml
-# Modifier les mots de passe dans k8s/secrets.yaml
+make demo
 ```
+
+Ou étape par étape :
+
+```bash
+make repo          # Ajouter/mettre à jour le repo Helm
+make namespace     # Créer le namespace openmetadata
+make secrets       # Appliquer les secrets (mysql, oidc, jena, oauth2-proxy)
+make deps          # MySQL + OpenSearch + Airflow
+make app           # OpenMetadata 1.13.0
+make jena-check    # Vérifier la connectivité vers Jena Fuseki
+make status        # État des pods
+```
+
+### Accès démo
+
+| Service | URL |
+|---|---|
+| OpenMetadata | `http://openmetadata.192.168.11.150.nip.io` |
+| Keycloak SSO | `https://auth.192.168.11.150.nip.io` |
+| Port-forward local | `make port-forward` → `http://localhost:8585` |
+
+Login par défaut : **admin / admin**
 
 ## Déploiement via ArgoCD (GitOps)
 
@@ -157,16 +191,19 @@ Dans tous les cas, l'objectif est de supprimer le `:8443` et d'avoir un `issuer`
 
 ## Commandes disponibles
 
-| Commande               | Description                                    |
-|------------------------|------------------------------------------------|
-| `make install`         | Installer tout (dépendances + OpenMetadata)    |
-| `make uninstall`       | Désinstaller tout                              |
-| `make status`          | Voir le statut des pods et services            |
-| `make port-forward`    | Port-forward vers localhost:8585               |
-| `make deps`            | Installer uniquement les dépendances           |
-| `make app`             | Installer uniquement OpenMetadata              |
-| `make repo`            | Ajouter/mettre à jour le repo Helm             |
-| `make lint`            | Valider les templates Helm                     |
+| Commande               | Description                                             |
+|------------------------|---------------------------------------------------------|
+| `make demo`            | Déploiement complet démo + vérifications                |
+| `make install`         | Installer tout (dépendances + OpenMetadata)             |
+| `make uninstall`       | Désinstaller tout                                       |
+| `make status`          | Voir le statut des pods et services                     |
+| `make port-forward`    | Port-forward vers localhost:8585                        |
+| `make deps`            | Installer uniquement les dépendances                    |
+| `make app`             | Installer uniquement OpenMetadata                       |
+| `make repo`            | Ajouter/mettre à jour le repo Helm                      |
+| `make lint`            | Valider les templates Helm (dry-run)                    |
+| `make jena-check`      | Vérifier la connectivité vers Jena Fuseki (arcaq-k8s)   |
+| `make upgrade-check`   | Comparer version actuelle vs versions disponibles       |
 
 ## Déploiement manuel étape par étape
 
@@ -198,12 +235,13 @@ helm upgrade --install openmetadata open-metadata/openmetadata \
 
 ### Versions
 
-| Composant      | Version |
-|----------------|---------|
-| OpenMetadata   | 1.11.8  |
-| Chart Helm     | 1.11.8  |
-| MySQL          | 8.0     |
-| OpenSearch     | Latest  |
+| Composant        | Version  |
+|------------------|----------|
+| OpenMetadata     | 1.13.0   |
+| Chart Helm       | 1.13.0   |
+| MySQL            | 8.0      |
+| OpenSearch       | Latest   |
+| Apache Jena      | 4.8.0    |
 
 ### Personnalisation
 
@@ -296,10 +334,15 @@ kubectl create secret generic airflow-secrets \
   --from-literal=openmetadata-airflow-password=admin \
   -n openmetadata
 
-# (Optionnel) Si vous activez l'auth OIDC / Keycloak
+# OIDC / Keycloak
 kubectl create secret generic oidc-secrets \
   --from-literal=openmetadata-oidc-client-id=<client_id> \
   --from-literal=openmetadata-oidc-client-secret=<client_secret> \
+  -n openmetadata
+
+# Jena Fuseki (arcaq-k8s) — doit correspondre à ADMIN_PASSWORD dans arcaq-k8s
+kubectl create secret generic jena-secrets \
+  --from-literal=openmetadata-jena-password=<jena_admin_password> \
   -n openmetadata
 ```
 
@@ -338,3 +381,75 @@ ArgoCD
 ```
 
 L'application `openmetadata-app.yaml` utilise la fonctionnalité **multi-sources** d'ArgoCD : le chart Helm est récupéré depuis le repo Helm officiel, et les `values.yaml` sont lus depuis le repo Git. Toute modification des values dans Git déclenche automatiquement un sync.
+
+---
+
+## Intégration Apache Jena Fuseki (Knowledge Graph RDF)
+
+Depuis la version **1.13.0**, OpenMetadata supporte nativement un triple store RDF/SPARQL via la section `rdf` du chart Helm.
+
+Dans cette stack, le triple store est fourni par le projet **arcaq-k8s** (namespace `arcaq`).
+
+### Service Fuseki
+
+| Paramètre        | Valeur                                                                 |
+|------------------|------------------------------------------------------------------------|
+| Endpoint interne | `http://arcaq-knowledge-graph.arcaq.svc.cluster.local:3030/arcaq`     |
+| Dataset          | `arcaq`                                                                |
+| Image            | `stain/jena-fuseki:4.8.0`                                              |
+| Secret           | `jena-secrets` (clef `openmetadata-jena-password`) — namespace `openmetadata` |
+
+### Prérequis réseau
+
+OMD (namespace `openmetadata`) doit joindre Jena (namespace `arcaq`) sur le port `3030`. Si des NetworkPolicies sont actives, ajouter une règle `ingress` sur le déploiement Jena dans arcaq-k8s :
+
+```yaml
+- from:
+  - namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: openmetadata
+  ports:
+  - protocol: TCP
+    port: 3030
+```
+
+### Ordre de démarrage
+
+Le dataset `arcaq` doit exister dans Fuseki **avant** le premier boot d'OpenMetadata 1.13. Le chart arcaq-k8s le crée automatiquement au démarrage via la variable `JENA_DATASET`.
+
+### Synchronisation du secret Jena
+
+La valeur du secret `jena-secrets` doit correspondre exactement au `ADMIN_PASSWORD` du déploiement Jena dans arcaq-k8s. En prod, utiliser un Sealed Secret ou un External Secret synchronized depuis le namespace `arcaq`.
+
+## Intégration Apache Jena Fuseki (Knowledge Graph RDF)
+
+Depuis la version **1.13.0**, OpenMetadata supporte nativement un triple store RDF/SPARQL via la section `rdf` du chart Helm.
+
+Dans cette stack, le triple store est fourni par le projet **arcaq-k8s** (namespace `arcaq`).
+
+### Service Fuseki
+
+| Paramètre        | Valeur                                                                 |
+|------------------|------------------------------------------------------------------------|
+| Endpoint interne | `http://arcaq-knowledge-graph.arcaq.svc.cluster.local:3030/arcaq`     |
+| Dataset          | `arcaq`                                                                |
+| Image            | `stain/jena-fuseki:4.8.0`                                              |
+| Secret           | `jena-secrets` (namespace `openmetadata`) ← `ADMIN_PASSWORD` arcaq-k8s|
+
+### Prérequis réseau
+
+Le namespace `openmetadata` doit pouvoir joindre le namespace `arcaq` sur le port `3030`. Si des NetworkPolicies sont actives, ajouter une règle `ingress` sur le déploiement Jena :
+
+```yaml
+- from:
+  - namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: openmetadata
+  ports:
+  - protocol: TCP
+    port: 3030
+```
+
+### Ordre de démarrage
+
+Le dataset `arcaq` doit exister dans Fuseki **avant** le premier boot d'OpenMetadata 1.13. Le chart arcaq-k8s le crée automatiquement au démarrage via la variable `JENA_DATASET`.
