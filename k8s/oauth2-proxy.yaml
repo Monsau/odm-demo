@@ -59,6 +59,8 @@ spec:
             - --skip-auth-regex=^/api/v1/system/config/jwks
             - --skip-auth-regex=^/healthcheck
             - --skip-auth-regex=^/_next/static/.*
+            # TLS : cert Keycloak auto-signé — skip verify en démo
+            - --ssl-insecure-skip-verify=true
             # Serveur
             - --http-address=0.0.0.0:4180
           env:
