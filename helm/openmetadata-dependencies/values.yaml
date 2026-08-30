@@ -52,14 +52,11 @@ mysql:
 # OpenSearch
 # =============================================================================
 opensearch:
-  enabled: true
-  fullnameOverride: "opensearch"
-  clusterName: "opensearch"
-  # Pin 3.1.0: OM 2.0 search queries (script_score over multi_match) NPE on
-  # OpenSearch 3.3.2 (Lucene 10.3 regression). 3.1.0 verified working.
-  image:
-    tag: "3.1.0"
-  imagePullPolicy: IfNotPresent
+  # DESACTIVE: OpenSearch (3.1.0 et 3.3.2) NPE sur les queries OM 2.0
+  # (script_score wrappant multi_match dans dis_max -> DisiWrapper NPE).
+  # Moteur remplace par Elasticsearch 8.x (k8s/elasticsearch.yaml), seul
+  # moteur qui execute correctement les queries OM.
+  enabled: false
   nodeGroup: ""
   replicas: 1
   minimumMasterNodes: 1

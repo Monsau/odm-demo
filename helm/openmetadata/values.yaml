@@ -122,10 +122,12 @@ openmetadata:
     # -------------------------------------------------------------------------
     elasticsearch:
       enabled: true
-      host: opensearch
+      # Elasticsearch 8.x (moteur de reference OM 2.0). OpenSearch casse les
+      # queries OM (script_score dans dis_max -> NPE, reproduit 3.1.0/3.3.2).
+      host: elasticsearch
       port: 9200
       scheme: http
-      searchType: opensearch
+      searchType: elasticsearch
       clusterAlias: ""
       searchIndexMappingLanguage: EN
       keepAliveTimeoutSecs: 600
