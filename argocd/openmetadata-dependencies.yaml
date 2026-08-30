@@ -23,7 +23,7 @@ spec:
   sources:
     - repoURL: https://helm.open-metadata.org
       chart: openmetadata-dependencies
-      targetRevision: 1.13.0
+      targetRevision: 2.0.0
       helm:
         valueFiles:
           - $values/helm/openmetadata-dependencies/values.yaml

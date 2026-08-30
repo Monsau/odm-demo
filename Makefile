@@ -7,7 +7,7 @@ RELEASE_NAME    ?= openmetadata
 DEPS_RELEASE_NAME ?= openmetadata-dependencies
 HELM_REPO       ?= open-metadata
 HELM_REPO_URL   ?= https://helm.open-metadata.org
-CHART_VERSION   ?= 1.13.0
+CHART_VERSION   ?= 2.0.0
 JENA_NAMESPACE  ?= arcaq
 JENA_SERVICE    ?= arcaq-knowledge-graph
 

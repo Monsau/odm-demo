@@ -1,14 +1,14 @@
 # =============================================================================
 # OpenMetadata Dependencies Helm Values
 # Chart: open-metadata/openmetadata-dependencies
-# Inclut: MySQL, OpenSearch, Airflow
+# Version: 2.0.0
+# Inclut: MySQL, OpenSearch, Airflow 3
 # =============================================================================
 
-# -- StorageClass à utiliser pour tous les PVC
-# Pas besoin de forcer : local-path est déjà la StorageClass par défaut du cluster.
-# Forcer global.storageClass cause des erreurs "Forbidden" sur les StatefulSets existants.
-# global:
-#   storageClass: local-path
+# -- Permet l'utilisation d'images héritées (bitnamilegacy/mysql)
+global:
+  security:
+    allowInsecureImages: true
 
 # =============================================================================
 # MySQL
@@ -16,17 +16,21 @@
 mysql:
   enabled: true
   fullnameOverride: "mysql"
+  architecture: standalone
   image:
-    tag: "8.0"
+    registry: docker.io
+    repository: bitnamilegacy/mysql
+    tag: 8.0.37-debian-12-r2
+    pullPolicy: Always
   auth:
     rootPassword: ""  # Défini via secret
     database: openmetadata_db
     username: openmetadata_user
     existingSecret: mysql-secrets
   primary:
+    extraFlags: "--sort_buffer_size=20M"
     persistence:
       enabled: true
-      # storageClass: ""
       size: 5Gi
       accessModes:
         - ReadWriteOnce
@@ -41,7 +45,7 @@ mysql:
     init_openmetadata_db_scripts.sql: |
       CREATE DATABASE IF NOT EXISTS openmetadata_db;
       CREATE USER IF NOT EXISTS 'openmetadata_user'@'%' IDENTIFIED BY 'openmetadata_password';
-      GRANT ALL PRIVILEGES ON openmetadata_db.* TO 'openmetadata_user'@'%';
+      GRANT ALL PRIVILEGES ON openmetadata_db.* TO 'openmetadata_user'@'%' WITH GRANT OPTION;
       FLUSH PRIVILEGES;
 
 # =============================================================================
@@ -51,9 +55,12 @@ opensearch:
   enabled: true
   fullnameOverride: "opensearch"
   clusterName: "opensearch"
+  nodeGroup: ""
   replicas: 1
   minimumMasterNodes: 1
   singleNode: true
+  imagePullPolicy: Always
+  opensearchJavaOpts: "-Xmx1g -Xms1g"
   resources:
     requests:
       cpu: 250m
@@ -63,56 +70,71 @@ opensearch:
       memory: 2Gi
   persistence:
     enabled: true
-    # storageClass: ""
     size: 5Gi
     accessModes:
       - ReadWriteOnce
+  protocol: http
   config:
     opensearch.yml: |
       plugins.security.disabled: true
       discovery.type: single-node
+      indices.query.bool.max_clause_count: 4096
   extraEnvs:
     - name: DISABLE_SECURITY_PLUGIN
       value: "true"
 
 # =============================================================================
-# Airflow
+# Airflow 3
 # =============================================================================
 airflow:
   enabled: true
-  airflow:
-    image:
-      repository: docker.getcollate.io/openmetadata/ingestion
-      tag: "1.12.5"
-      pullPolicy: Always
-    executor: LocalExecutor
-    config:
-      AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
-    users:
-      - username: admin
-        password: admin
-        role: Admin
-        email: admin@openmetadata.org
-        firstName: Admin
-        lastName: User
-  # -- Fernet key for Airflow encryption (must be a valid 32-byte base64 key)
+
+  # -- Fernet key (doit être défini à l'install, pas à l'upgrade)
   fernetKey: "jJ/9sz0g0OHxsfxOoSfdFdmk3ysNmPRnH3TUAbz3IHA="
-  # -- Static secret key for Airflow webserver (required for JWT token auth)
-  webserverSecretKey: "a5f8c3e2d1b9a7f6e4c3b2a1f9e8d7c6b5a4f3e2d1c9b8a7f6e5d4c3b2a1f0e9"
-  # -- Workaround for Airflow 3 + MySQL compatibility: downgrade FAB provider
-  # -- Force LocalExecutor via env var (overrides airflow.cfg)
+
+  # -- Flask secret key pour Airflow 3+ (ancien webserverSecretKey)
+  apiSecretKey: "a5f8c3e2d1b9a7f6e4c3b2a1f9e8d7c6b5a4f3e2d1c9b8a7f6e5d4c3b2a1f0e9"
+
+  # -- JWT secret key pour Airflow 3+
+  jwtSecret: "a5f8c3e2d1b9a7f6e4c3b2a1f9e8d7c6b5a4f3e2d1c9b8a7f6e5d4c3b2a1f0e9"
+
+  # -- Image d'ingestion OpenMetadata (Airflow 3)
+  images:
+    airflow:
+      repository: docker.getcollate.io/openmetadata/ingestion
+      tag: "2.0.0"
+      pullPolicy: Always
+
+  # -- LocalExecutor car le stockage local-path ne supporte pas RWX
+  executor: "LocalExecutor"
+
   env:
+    # Airflow 3 API auth backends (nécessaire pour que l'UI OM récupère le statut des DAGs)
+    - name: AIRFLOW__API__AUTH_BACKENDS
+      value: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
+    # Workaround Airflow 3 + MySQL : downgrade FAB provider
     - name: _PIP_ADDITIONAL_REQUIREMENTS
       value: "apache-airflow-providers-fab==2.4.4"
+    # Force LocalExecutor (override airflow.cfg)
     - name: AIRFLOW__CORE__EXECUTOR
       value: "LocalExecutor"
-  # -- Disable Helm hooks so ArgoCD manages the migration Job as a regular resource
-  migrateDatabaseJob:
-    useHelmHooks: false
+
+  # -- Création de l'admin Airflow (utilisé par OpenMetadata pour l'auth pipeline)
   createUserJob:
     useHelmHooks: false
-  # -- Disable waitForMigrations on ALL components to avoid init container deadlock
-  # (from working prod config: the migration Job runs independently)
+    defaultUser:
+      username: admin
+      password: admin
+      role: Admin
+      email: admin@openmetadata.org
+      firstName: Admin
+      lastName: User
+
+  # -- Migration Airflow (désactivation des hooks pour ArgoCD)
+  migrateDatabaseJob:
+    useHelmHooks: false
+
+  # -- Désactivation des attentes de migration sur tous les composants
   apiServer:
     waitForMigrations:
       enabled: false
@@ -131,6 +153,7 @@ airflow:
       limits:
         cpu: 1
         memory: 2Gi
+
   scheduler:
     waitForMigrations:
       enabled: false
@@ -149,20 +172,7 @@ airflow:
       limits:
         cpu: 1
         memory: 2Gi
-  dagProcessor:
-    waitForMigrations:
-      enabled: false
-    extraInitContainers: []
-    livenessProbe:
-      timeoutSeconds: 60
-      failureThreshold: 5
-    resources:
-      requests:
-        cpu: 100m
-        memory: 512Mi
-      limits:
-        cpu: 1
-        memory: 2Gi
+
   triggerer:
     waitForMigrations:
       enabled: false
@@ -177,11 +187,18 @@ airflow:
       limits:
         cpu: 500m
         memory: 1Gi
-  # -- Flower & Redis not needed with LocalExecutor
+
+  # -- Pas de dagProcessor en LocalExecutor
+  dagProcessor:
+    enabled: false
+
+  # -- Pas de Flower ni Redis avec LocalExecutor
   flower:
     enabled: false
   redis:
     enabled: false
+
+  # -- PostgreSQL interne pour la metadata DB d'Airflow 3
   postgresql:
     enabled: true
     image:
@@ -192,30 +209,40 @@ airflow:
       enablePostgresUser: true
       postgresPassword: postgres
       database: airflow
-    persistence:
-      enabled: true
-      size: 5Gi
-      accessModes:
-        - ReadWriteOnce
+
+  # -- Connexion metadata Airflow vers PostgreSQL interne
+  data:
+    metadataConnection:
+      user: postgres
+      pass: postgres
+      protocol: postgresql
+      host: openmetadata-dependencies-postgresql
+      port: 5432
+      db: airflow
+      sslmode: disable
+
+  # -- PVC partagé pour les DAGs (déjà créé par k8s/pvc-airflow-dags.yaml)
   dags:
     persistence:
       enabled: true
-      # -- PVC géré par openmetadata-infra (k8s/pvc-airflow-dags.yaml)
-      # -- existingClaim évite que le chart crée/supprime le PVC → plus de conflit ArgoCD
       existingClaim: openmetadata-dependencies-dags
+
   logs:
     persistence:
       enabled: false
       size: 1Gi
+
   ingress:
     apiServer:
       enabled: true
       ingressClassName: traefik
       annotations: {}
+      path: /
+      pathType: Prefix
       hosts:
         - name: airflow.192.168.11.150.nip.io
-          path: /
+          tls:
+            enabled: false
         - name: airflow.local
-          path: /
-      tls:
-        enabled: false
+          tls:
+            enabled: false

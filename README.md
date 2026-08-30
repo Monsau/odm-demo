@@ -11,7 +11,7 @@ Déploiement d'[OpenMetadata](https://open-metadata.org/) sur Kubernetes en util
 │  namespace: openmetadata                                        │
 │  ┌─────────────────┐  ┌────────────┐  ┌──────────────┐         │
 │  │  OpenMetadata   │  │ OpenSearch │  │    MySQL     │         │
-│  │   Server 1.13   │  │   :9200    │  │   :3306      │         │
+│  │   Server 2.0   │  │   :9200    │  │   :3306      │         │
 │  │   :8585         │  └────────────┘  └──────────────┘         │
 │  └────────┬────────┘                                           │
 │           │  (cross-namespace RDF)                             │
@@ -79,7 +79,7 @@ make repo          # Ajouter/mettre à jour le repo Helm
 make namespace     # Créer le namespace openmetadata
 make secrets       # Appliquer les secrets (mysql, oidc, jena, oauth2-proxy)
 make deps          # MySQL + OpenSearch + Airflow
-make app           # OpenMetadata 1.13.0
+make app           # OpenMetadata 2.0.0
 make jena-check    # Vérifier la connectivité vers Jena Fuseki
 make status        # État des pods
 ```
@@ -93,6 +93,50 @@ make status        # État des pods
 | Port-forward local | `make port-forward` → `http://localhost:8585` |
 
 Login par défaut : **admin / admin**
+
+## Upgrade vers 2.0.0
+
+> ⚠️ OpenMetadata 2.0.0 est une release majeure. La migration DB est **automatique et irréversible**. Faire une sauvegarde MySQL avant.
+
+### Prérequis avant upgrade
+
+1. Sauvegarder `openmetadata_db` :
+   ```bash
+   kubectl -n openmetadata exec mysql-0 -- mysqldump -u root -p<root_password> \
+     --databases openmetadata_db airflow_db --single-transaction --quick \
+     > openmetadata_$(date +%Y%m%d_%H%M%S).sql
+   ```
+2. Vérifier qu'aucun pipeline d'ingestion n'est en cours (`Running`).
+3. Augmenter temporairement `sort_buffer_size` MySQL à 20M pour la migration.
+
+### Changements majeurs
+
+- **Airflow 3** : le chart `openmetadata-dependencies` 2.0 embarque Apache Airflow 3. Ce repo migre la metadata DB d'Airflow de PostgreSQL vers MySQL (`airflow_db`) et recrée cette base lors de l'upgrade.
+- **Reindexation obligatoire** : après le démarrage d'OpenMetadata 2.0, lancer `Settings → Applications → Search Indexing → Run Now`.
+- **Breaking changes API/UI** : voir [OpenMetadata 1.13 → 2.0 Breaking Changes](https://openmetadatastandards.org/breaking-changes/).
+
+### Procédure
+
+```bash
+# 1. Préparer MySQL
+kubectl -n openmetadata exec mysql-0 -- mysql -u root -p<root_password> -e \
+  "SET GLOBAL sort_buffer_size = 20971520; DROP DATABASE IF EXISTS airflow_db; \
+   CREATE DATABASE airflow_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; \
+   CREATE USER IF NOT EXISTS 'airflow_user'@'%' IDENTIFIED BY 'airflow_pass'; \
+   GRANT ALL PRIVILEGES ON airflow_db.* TO 'airflow_user'@'%' WITH GRANT OPTION; \
+   FLUSH PRIVILEGES;"
+
+# 2. Linter les nouvelles values
+make lint
+
+# 3. Upgrade Helm
+make deps   # dépendances (MySQL, OpenSearch, Airflow 3)
+make app    # OpenMetadata 2.0.0
+
+# 4. Post-upgrade
+make status
+# Puis dans l'UI : Settings → Applications → Search Indexing → Run Now
+```
 
 ## Déploiement via ArgoCD (GitOps)
 
@@ -237,8 +281,8 @@ helm upgrade --install openmetadata open-metadata/openmetadata \
 
 | Composant        | Version  |
 |------------------|----------|
-| OpenMetadata     | 1.13.0   |
-| Chart Helm       | 1.13.0   |
+| OpenMetadata     | 2.0.0    |
+| Chart Helm       | 2.0.0    |
 | MySQL            | 8.0      |
 | OpenSearch       | Latest   |
 | Apache Jena      | 4.8.0    |
