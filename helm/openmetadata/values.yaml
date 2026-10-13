@@ -275,7 +275,8 @@ openmetadata:
     # -------------------------------------------------------------------------
     rdf:
       enabled: true
-      baseUri: "https://open-metadata.org/"
+      # Meme espace de graphes qu arcaq : le KG OM devient http://arcaq.com/graph/knowledge
+      baseUri: "http://arcaq.com/"
       storageType: "FUSEKI"
       remoteEndpoint: "http://arcaq-jena.arcaq-dev.svc.cluster.local:3030/arcaq"
       username: "admin"
