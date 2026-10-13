@@ -29,6 +29,12 @@ spec:
       labels:
         app: oauth2-proxy
     spec:
+      # Le nom auth.staging.server01 n'existe pas dans le DNS interne du cluster ;
+      # il est servi par l'ingress traefik du LAN (192.168.11.150).
+      hostAliases:
+        - ip: 192.168.11.150
+          hostnames:
+            - auth.staging.server01
       containers:
         - name: oauth2-proxy
           image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
@@ -39,7 +45,7 @@ spec:
           args:
             # Provider OIDC Keycloak
             - --provider=oidc
-            - --oidc-issuer-url=http://auth.192.168.11.150.nip.io/realms/tour-operator
+            - --oidc-issuer-url=https://auth.staging.server01/realms/tour-operator
             - --client-id=openmetadata
             - --redirect-url=http://openmetadata.local/oauth2/callback
             # Upstream (OpenMetadata)
