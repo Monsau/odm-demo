@@ -270,14 +270,14 @@ openmetadata:
 
     # -------------------------------------------------------------------------
     # RDF / Knowledge Graph (Apache Jena Fuseki - arcaq-k8s)
-    # Service : arcaq-knowledge-graph.arcaq.svc.cluster.local:3030
+    # Service : arcaq-jena.arcaq-dev.svc.cluster.local:3030 (alias ExternalName -> arcaq-knowledge-graph, namespace arcaq-dev)
     # Dataset : arcaq
     # -------------------------------------------------------------------------
     rdf:
       enabled: true
       baseUri: "https://open-metadata.org/"
       storageType: "FUSEKI"
-      remoteEndpoint: "http://arcaq-knowledge-graph.arcaq.svc.cluster.local:3030/arcaq"
+      remoteEndpoint: "http://arcaq-jena.arcaq-dev.svc.cluster.local:3030/arcaq"
       username: "admin"
       password:
         secretRef: jena-secrets
