@@ -54,6 +54,14 @@ spec:
       kind: Secret
       jsonPointers:
         - /data
+    # Job one-shot de migrations : checksum helm differant a chaque render
+    - group: batch
+      kind: Job
+      name: openmetadata-dependencies-run-airflow-migrations
+      namespace: openmetadata
+      jsonPointers:
+        - /spec/template
+        - /metadata/annotations
 
   syncPolicy:
     automated:
